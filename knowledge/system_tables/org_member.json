@@ -1,0 +1,96 @@
+{
+  "tableName": "ORG_MEMBER",
+  "tableType": "system",
+  "description": "OA 人员表（选人字段关联）",
+  "primaryField": "ID",
+  "joinRule": "TO_CHAR(ORG_MEMBER.ID) = {formTable}.{selectField}",
+  "supportsMulti": true,
+  "multiRule": {
+    "description": "多选人字段存多个 ID 逗号分隔，如 \"123,456,789\"",
+    "splitMethod": "REGEXP_SUBSTR + CONNECT BY",
+    "aggregateMethod": "LISTAGG(NAME, '、')",
+    "template": "knowledge/sql_templates/form_query/formmain_multi_select.sql"
+  },
+  "defaultFilter": "STATE = 1 AND IS_ENABLE = 1 AND IS_DELETED = 0",
+  "defaultFilterDescription": "默认只查在职、启用、未删除的人员",
+  "fields": [
+    {
+      "fieldName": "ID",
+      "displayName": "主键",
+      "dbFinalType": "BIGINT",
+      "description": "人员唯一标识，OA 选人字段存储此值。超长数字，可能为负数，必须按字符串兼容处理"
+    },
+    {
+      "fieldName": "NAME",
+      "displayName": "姓名",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "人员姓名，选人字段关联后取此列作为显示值"
+    },
+    {
+      "fieldName": "CODE",
+      "displayName": "编号",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "人员工号/编号"
+    },
+    {
+      "fieldName": "STATE",
+      "displayName": "在职状态",
+      "dbFinalType": "SMALLINT",
+      "description": "1=在职，2=离职"
+    },
+    {
+      "fieldName": "IS_ENABLE",
+      "displayName": "启用状态",
+      "dbFinalType": "SMALLINT",
+      "description": "1=启用，0=停用"
+    },
+    {
+      "fieldName": "IS_DELETED",
+      "displayName": "删除标记",
+      "dbFinalType": "SMALLINT",
+      "description": "1=已删除，0=未删除"
+    },
+    {
+      "fieldName": "IS_ADMIN",
+      "displayName": "管理员标记",
+      "dbFinalType": "SMALLINT",
+      "description": "1=管理员，0=非管理员"
+    },
+    {
+      "fieldName": "TYPE",
+      "displayName": "人员类型",
+      "dbFinalType": "SMALLINT",
+      "description": "1=正式，2=非正式"
+    },
+    {
+      "fieldName": "ORG_DEPARTMENT_ID",
+      "displayName": "主岗部门ID",
+      "dbFinalType": "BIGINT",
+      "description": "关联 ORG_UNIT.ID，用于查人员所属部门"
+    },
+    {
+      "fieldName": "ORG_POST_ID",
+      "displayName": "主岗岗位ID",
+      "dbFinalType": "BIGINT",
+      "description": "关联 ORG_POST.ID，用于查人员所属岗位"
+    },
+    {
+      "fieldName": "ORG_ACCOUNT_ID",
+      "displayName": "主岗单位ID",
+      "dbFinalType": "BIGINT",
+      "description": "关联单位表，用于查人员所属单位"
+    }
+  ],
+  "relatedTables": [
+    {
+      "tableName": "ORG_UNIT",
+      "relation": "ORG_MEMBER.ORG_DEPARTMENT_ID = ORG_UNIT.ID",
+      "description": "通过主岗部门ID关联部门表"
+    },
+    {
+      "tableName": "ORG_POST",
+      "relation": "ORG_MEMBER.ORG_POST_ID = ORG_POST.ID",
+      "description": "通过主岗岗位ID关联岗位表"
+    }
+  ]
+}

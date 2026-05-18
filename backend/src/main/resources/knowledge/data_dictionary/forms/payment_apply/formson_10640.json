@@ -1,0 +1,185 @@
+{
+  "formName": "付款申请表-非订单类明细",
+  "tableName": "FORMSON_10640",
+  "tableType": "son",
+  "parentTable": "FORMMAIN_10639",
+  "description": "付款申请表明细表（非订单类-其他）",
+  "fields": [
+    {
+      "fieldName": "ID",
+      "displayName": "主键",
+      "dbFinalType": "NUMBER",
+      "inputType": "系统",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "MAINID",
+      "displayName": "主表ID",
+      "dbFinalType": "NUMBER",
+      "inputType": "系统",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0032",
+      "displayName": "序号-非订单类",
+      "dbFinalType": "NUMBER(20,0)",
+      "inputType": "序号",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0033",
+      "displayName": "摘要",
+      "dbFinalType": "VARCHAR2(255)",
+      "inputType": "文本域",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0034",
+      "displayName": "会计科目",
+      "dbFinalType": "VARCHAR2(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0084",
+      "displayName": "会计科目描述",
+      "dbFinalType": "VARCHAR2(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0035",
+      "displayName": "项目代码",
+      "dbFinalType": "VARCHAR2(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0085",
+      "displayName": "项目代码描述",
+      "dbFinalType": "VARCHAR2(2000)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0036",
+      "displayName": "成本中心",
+      "dbFinalType": "VARCHAR2(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0086",
+      "displayName": "成本中心描述",
+      "dbFinalType": "VARCHAR2(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0095",
+      "displayName": "税率-非订单",
+      "dbFinalType": "NUMBER(20,2)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0096",
+      "displayName": "税额-非订单",
+      "dbFinalType": "NUMBER(20,2)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0097",
+      "displayName": "金额",
+      "dbFinalType": "NUMBER(20,2)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0039",
+      "displayName": "含税金额-非订单",
+      "dbFinalType": "NUMBER(20,2)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0037",
+      "displayName": "币种-非订单类",
+      "dbFinalType": "NUMBER(19,0)",
+      "inputType": "下拉",
+      "isSpecial": true,
+      "isMultiSelect": false,
+      "refTable": "CTP_ENUM_ITEM",
+      "refKey": "ID",
+      "refDisplay": "SHOWVALUE"
+    },
+    {
+      "fieldName": "FIELD0038",
+      "displayName": "付款期-非订单类",
+      "dbFinalType": "NUMBER(19,0)",
+      "inputType": "下拉",
+      "isSpecial": true,
+      "isMultiSelect": false,
+      "refTable": "CTP_ENUM_ITEM",
+      "refKey": "ID",
+      "refDisplay": "SHOWVALUE"
+    }
+  ]
+}

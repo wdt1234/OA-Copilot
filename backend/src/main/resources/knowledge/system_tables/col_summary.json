@@ -1,0 +1,131 @@
+{
+  "tableName": "COL_SUMMARY",
+  "tableType": "system",
+  "description": "OA 协同主表 / 流程实例主表（流程状态核心），一个流程实例对应一条记录",
+  "primaryField": "ID",
+  "joinRule": "COL_SUMMARY.FORM_RECORDID = {formTable}.ID",
+  "fields": [
+    {
+      "fieldName": "ID",
+      "displayName": "主键",
+      "dbFinalType": "BIGINT",
+      "description": "流程实例唯一标识，关联 CTP_AFFAIR.OBJECT_ID 和 CTP_COMMENT_ALL.MODULE_ID"
+    },
+    {
+      "fieldName": "STATE",
+      "displayName": "流程状态",
+      "dbFinalType": "SMALLINT",
+      "description": "流程整体状态：0=未结束，1=终止，2=待发，3=已结束。这是判断流程状态的唯一权威字段"
+    },
+    {
+      "fieldName": "SUB_STATE",
+      "displayName": "流程子状态",
+      "dbFinalType": "SMALLINT",
+      "description": "流程子状态：0=老数据（未升级），1=正常（默认状态），2=流程处于指定回退状态"
+    },
+    {
+      "fieldName": "SUBJECT",
+      "displayName": "标题",
+      "dbFinalType": "VARCHAR(1024)",
+      "description": "流程标题（如：系统功能开发和变更申请-20260512-002-陈群）"
+    },
+    {
+      "fieldName": "FORM_RECORDID",
+      "displayName": "表单记录ID",
+      "dbFinalType": "BIGINT",
+      "description": "关联 FORMMAIN_xxxx.ID，定位业务数据。标准链路：FORMMAIN.ID = COL_SUMMARY.FORM_RECORDID"
+    },
+    {
+      "fieldName": "START_MEMBER_ID",
+      "displayName": "发起人ID",
+      "dbFinalType": "BIGINT",
+      "description": "流程发起人，关联 ORG_MEMBER.ID"
+    },
+    {
+      "fieldName": "CASE_ID",
+      "displayName": "流程实例ID",
+      "dbFinalType": "BIGINT",
+      "description": "流程实例 ID"
+    },
+    {
+      "fieldName": "PROCESS_ID",
+      "displayName": "流程ID",
+      "dbFinalType": "VARCHAR(255)",
+      "description": "流程定义 ID"
+    },
+    {
+      "fieldName": "CREATE_DATE",
+      "displayName": "创建时间",
+      "dbFinalType": "DATETIME",
+      "description": "流程创建时间"
+    },
+    {
+      "fieldName": "START_DATE",
+      "displayName": "开始时间",
+      "dbFinalType": "DATETIME",
+      "description": "流程开始时间"
+    },
+    {
+      "fieldName": "FINISH_DATE",
+      "displayName": "结束时间",
+      "dbFinalType": "DATETIME",
+      "description": "流程结束时间（未结束时为空）"
+    },
+    {
+      "fieldName": "ORG_DEPARTMENT_ID",
+      "displayName": "部门ID",
+      "dbFinalType": "BIGINT",
+      "description": "流程所属部门，关联 ORG_UNIT.ID"
+    },
+    {
+      "fieldName": "ORG_ACCOUNT_ID",
+      "displayName": "单位ID",
+      "dbFinalType": "BIGINT",
+      "description": "流程所属单位"
+    },
+    {
+      "fieldName": "IMPORTANT_LEVEL",
+      "displayName": "重要程度",
+      "dbFinalType": "SMALLINT",
+      "description": "1=普通，2=重要，3=非常重要"
+    },
+    {
+      "fieldName": "IS_COVER_TIME",
+      "displayName": "是否超期",
+      "dbFinalType": "SMALLINT",
+      "description": "0=未超期，1=超期"
+    },
+    {
+      "fieldName": "DEADLINE",
+      "displayName": "处理期限",
+      "dbFinalType": "BIGINT",
+      "description": "处理期限"
+    },
+    {
+      "fieldName": "TEMPLETE_ID",
+      "displayName": "模板ID",
+      "dbFinalType": "BIGINT",
+      "description": "流程模板 ID"
+    },
+    {
+      "fieldName": "SOURCE",
+      "displayName": "协同来源",
+      "dbFinalType": "VARCHAR(255)",
+      "description": "协同来源（用于显示外部系统名称，如 NC）"
+    },
+    {
+      "fieldName": "CURRENT_NODES_INFO",
+      "displayName": "当前处理人信息",
+      "dbFinalType": "VARCHAR(255)",
+      "description": "当前处理人信息"
+    }
+  ],
+  "criticalRules": [
+    "COL_SUMMARY 是流程实例主表，一个流程实例对应一条记录",
+    "COL_SUMMARY.STATE 是流程整体状态的唯一权威字段（0=未结束, 1=终止, 2=待发, 3=已结束）",
+    "标准链路：FORMMAIN.ID = COL_SUMMARY.FORM_RECORDID",
+    "查询流程状态/流程是否结束 → 必须用 COL_SUMMARY.STATE",
+    "COL_SUMMARY.ID 关联 CTP_AFFAIR.OBJECT_ID（人员事项）",
+    "COL_SUMMARY.ID 关联 CTP_COMMENT_ALL.MODULE_ID（审批意见）"
+  ]
+}

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oacopilot.mapper.DataDictionaryMapper">
+
+    <select id="findAll" resultType="com.oacopilot.model.DataDictionary">
+        SELECT id, form_code, form_name, table_name, dictionary_json, raw_text, is_pinned, create_time, update_time
+        FROM data_dictionary
+        ORDER BY is_pinned DESC, update_time DESC
+    </select>
+
+    <select id="findByFormCode" resultType="com.oacopilot.model.DataDictionary">
+        SELECT id, form_code, form_name, table_name, dictionary_json, raw_text, is_pinned, create_time, update_time
+        FROM data_dictionary
+        WHERE form_code = #{formCode}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO data_dictionary (form_code, form_name, table_name, dictionary_json, raw_text, is_pinned, create_time, update_time)
+        VALUES (#{formCode}, #{formName}, #{tableName}, #{dictionaryJson}, #{rawText}, 0, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="update">
+        UPDATE data_dictionary
+        SET form_name = #{formName},
+            table_name = #{tableName},
+            dictionary_json = #{dictionaryJson},
+            raw_text = #{rawText},
+            update_time = #{updateTime}
+        WHERE form_code = #{formCode}
+    </update>
+
+    <delete id="deleteByFormCode">
+        DELETE FROM data_dictionary WHERE form_code = #{formCode}
+    </delete>
+
+    <delete id="deleteAll">
+        DELETE FROM data_dictionary
+    </delete>
+
+    <update id="setPinned">
+        UPDATE data_dictionary SET is_pinned = #{pinned} WHERE form_code = #{formCode}
+    </update>
+
+    <select id="search" resultType="com.oacopilot.model.DataDictionary">
+        SELECT id, form_code, form_name, table_name, dictionary_json, raw_text, is_pinned, create_time, update_time
+        FROM data_dictionary
+        WHERE form_code LIKE '%' || #{keyword} || '%'
+           OR form_name LIKE '%' || #{keyword} || '%'
+           OR table_name LIKE '%' || #{keyword} || '%'
+        ORDER BY is_pinned DESC, update_time DESC
+    </select>
+
+</mapper>

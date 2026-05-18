@@ -1,0 +1,14 @@
+{
+  "formId": "formmain_2003",
+  "formName": "采购申请单",
+  "description": "采购申请表单字段映射到 ERP 下单接口",
+  "mappings": [
+    { "source": "field0001", "target": "billNo", "type": "string" },
+    { "source": "field0002", "target": "applicant", "type": "string" },
+    { "source": "field0003", "target": "applyDate", "type": "date" },
+    { "source": "field0004", "target": "amount", "type": "number" },
+    { "source": "field0005", "target": "status", "type": "string" },
+    { "source": "field0006", "target": "deptName", "type": "string" },
+    { "source": "field0007", "target": "isUrgent", "type": "boolean" }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "formName": "采购申请表明细",
+  "appCode": "PUR",
+  "tableName": "FORMSON_0434",
+  "tableType": "son",
+  "mainName": "FORMMAIN_0433",
+  "description": "采购申请表明细行，记录每笔采购的物料明细",
+  "fields": [
+    {
+      "fieldName": "ID",
+      "displayName": "主键",
+      "dbFinalType": "NUMBER",
+      "inputType": "系统",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "MAINID",
+      "displayName": "主表ID",
+      "dbFinalType": "NUMBER",
+      "inputType": "系统",
+      "isSpecial": false,
+      "refTable": "FORMMAIN_0433",
+      "refKey": "ID",
+      "refDisplay": null,
+      "note": "关联主表，FORMSON.MAINID = FORMMAIN.ID",
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0032",
+      "displayName": "行号",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0033",
+      "displayName": "零件号",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0034",
+      "displayName": "描述",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0035",
+      "displayName": "数量",
+      "dbFinalType": "DECIMAL(20)",
+      "inputType": "金额",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0036",
+      "displayName": "单位",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0037",
+      "displayName": "单位成本",
+      "dbFinalType": "DECIMAL(20)",
+      "inputType": "金额",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0038",
+      "displayName": "行成本",
+      "dbFinalType": "DECIMAL(20)",
+      "inputType": "金额",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0039",
+      "displayName": "要求日期",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "日期",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0040",
+      "displayName": "产品线",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0041",
+      "displayName": "设计组",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0042",
+      "displayName": "组",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0043",
+      "displayName": "备注",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "文本域",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0063",
+      "displayName": "行币种",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0089",
+      "displayName": "产品类",
+      "dbFinalType": "VARCHAR(255)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    }
+  ]
+}

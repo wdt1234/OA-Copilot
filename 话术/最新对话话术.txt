@@ -1,0 +1,101 @@
+请更新项目文档结构。
+
+目标：
+项目进入 Phase 2：
+企业知识资产化阶段。
+
+请更新：
+
+* ROADMAP.md
+* TASKS.md
+* CLAUDE.md
+* DECISIONS.md
+* CHANGELOG.md
+
+要求：
+
+1. Phase 2 从“企业工具化”升级为：
+   “企业知识资产化”
+
+2. 核心方向：
+   建立 knowledge/ 企业知识体系
+
+3. 明确：
+   当前阶段重点不是继续扩展页面功能，
+   而是沉淀企业上下文知识。
+
+4. TASKS.md：
+   增加 knowledge/ 相关任务：
+
+   * data_dictionary
+   * dee_templates
+   * sql_templates
+   * prompts
+   * api_docs
+   * error_cases
+
+5. DECISIONS.md：
+   增加：
+   “为什么进入企业知识资产化阶段”
+
+   内容包括：
+
+   * 当前 AI 泛化能力瓶颈
+   * 企业语义缺失问题
+   * 为什么知识资产比继续扩功能更重要
+
+6. CLAUDE.md：
+   增加：
+
+   当前阶段开发原则：
+
+   * MVP 思维
+   * 企业内部工具思维
+   * 单人开发思维
+
+   当前禁止事项：
+
+   * 微服务
+   * Agent
+   * RAG
+   * 自动执行 SQL
+   * 自动修改企业数据
+   * 提前复杂化
+   * 聊天系统化
+
+7. ROADMAP.md：
+   Phase 2 调整为：
+
+   “企业知识资产化阶段”
+
+   明确：
+   当前核心目标：
+
+   knowledge/
+   ├── data_dictionary/
+   ├── dee_templates/
+   ├── sql_templates/
+   ├── prompts/
+   ├── api_docs/
+   └── error_cases/
+
+8. CHANGELOG.md：
+   记录：
+   项目正式进入：
+   “企业知识资产化阶段”
+
+要求：
+
+* 不重构现有结构
+* 保持 MVP 思维
+* 不做复杂架构
+* 不做 RAG
+* 不做 Agent
+
+完成后输出：
+
+1. 本次完成内容
+2. 修改文件列表
+3. 当前项目进度
+4. 下一阶段建议
+5. 当前风险/问题

@@ -1,0 +1,452 @@
+# DECISIONS
+
+# 2026-05-13
+
+## 为什么不做微服务
+
+原因：
+
+- MVP 阶段复杂度过高
+- 单人开发维护成本大
+- 当前业务量不需要
+
+决定：
+
+采用单体 SpringBoot。
+
+---
+
+## AI 接入方式
+
+原因：
+
+- 不绑定具体模型，用户可能随时切换
+- 需要一个统一的配置入口
+
+决定：
+
+- AiService 封装统一调用层，兼容 OpenAI 格式 API
+- 通过 application.yml 配置 endpoint / api-key / model
+- 用户改配置即可切换模型，无需改代码
+- AI 未配置时自动 fallback 到 mock
+
+---
+
+## 为什么不做 Agent
+
+原因：
+
+- 当前核心问题是模板化开发
+- Agent 容易过度复杂
+- 企业环境稳定性优先
+
+决定：
+
+优先 Prompt + 模板方案。
+
+---
+
+## 为什么使用 SQLite
+
+原因：
+
+- 零运维
+- 快速开发
+- 本地方便
+
+后期：
+
+迁移 MySQL。
+
+---
+
+## 为什么 Oracle 只读
+
+原因：
+
+- 避免误操作
+- 企业安全要求
+- AI 不允许直接改数据
+
+---
+
+## DEE 模板为什么分 4 种类型
+
+原因：
+
+- DEE 开发中最高频的 4 种场景
+- workflow：流程节点定义（占 40%）
+- token：接口认证配置（占 20%）
+- JSON：字段映射模板（占 30%）
+- Java：Handler 脚本（占 10%）
+
+决定：
+
+- 前端按类型选择，后端按类型返回对应 mock
+- 第二阶段按类型构建不同 Prompt
+
+---
+
+## 为什么进入企业知识资产化
+
+原因：
+
+- 通用 AI 无法理解企业业务语义
+- 企业开发核心是上下文知识
+- SQL/DEE/workflow 都高度依赖企业规范
+
+决定：
+
+Phase 2 开始：
+建立 knowledge/ 企业知识资产体系。
+
+AI 后续生成：
+逐步基于企业知识资产生成，
+而不是纯 Prompt 泛化生成。
+
+---
+
+## OA 字段类型约束
+
+原因：
+
+- 企业开发中容易误认为"流程处理意见""文本域"有特殊语义
+- 实际在数据库中均为普通文本字段（VARCHAR2/CLOB）
+- 混淆会导致 AI 生成错误的查询逻辑
+
+决定：
+
+- "流程处理意见""文本域"按普通文本字段处理，无特殊语义
+- 特殊字段仅 4 类：
+  - 选人：存 ORG_MEMBER.id
+  - 选部门：存 ORG_UNIT.id
+  - 下拉：存 CTP_ENUM_ITEM.id
+  - 上传附件：极少用，走 CTP_ATTACHMENT（sub_reference=field）
+
+---
+
+## 查询必须优先采用 OA 标准关联链路
+
+原因：
+
+- 致远 OA 流程数据分散在多张表中
+- 非标准关联会导致查询结果不完整或性能差
+- 标准链路是 OA 平台设计规范，必须遵守
+
+决定：
+
+- 查询流程相关数据时，必须优先使用标准关联链路：
+  FORMMAIN_XXXX.id ↔ COL_SUMMARY.form_recordid
+  COL_SUMMARY.id ↔ CTP_AFFAIR.OBJECT_ID
+  COL_SUMMARY.id ↔ CTP_COMMENT_ALL.module_id
+- AI 生成 SQL 时必须基于此链路
+
+---
+
+## 选人/选部门/下拉必须关联表转显示值
+
+原因：
+
+- OA 表单中选人/选部门/下拉框字段存的是 ID（数字）
+- 直接展示 ID 无业务含义，必须关联组织表/枚举表转为可读名称
+- 这是 OA 查询最常见的开发需求
+
+决定：
+
+- 选人 → JOIN ORG_MEMBER 取 name
+- 选部门 → JOIN ORG_UNIT 取 name
+- 选岗位 → JOIN ORG_POST 取 name
+- 下拉框 → JOIN CTP_ENUM_ITEM 取 showvalue
+- AI 生成涉及这些字段的 SQL 时，必须自动关联
+
+---
+
+## Knowledge 资产加载策略
+
+原因：
+
+- 知识资产需要被 AI 生成时引用
+- 初期需要简单可靠，不引入外部依赖
+- 后续可能需要热更新（不重启即可更新资产）
+
+决定：
+
+- 初期：打包到 classpath（resources/knowledge），随应用启动加载
+- KnowledgeService 提供缓存机制（ConcurrentHashMap）
+- AiService.generateSql(formCode) 自动注入数据字典上下文
+- 后续可演进到外部目录热更新（B 策略），但当前不做
+
+---
+
+## OA 表单字段全部通用
+
+原因：
+
+- 所有表单字段都是通用类型，没有特殊业务含义
+- 文本/日期/选人/选部门/下拉/上传附件/文本域/流程处理意见 — 这些类型在所有表单中语义一致
+- 不需要针对特定表单做字段特殊处理
+
+决定：
+
+- 数据字典 JSON schema 统一，不区分表单
+- AI 生成 SQL 时，按字段类型（inputType）通用处理，不按表单特殊处理
+- 字段数量多少不影响处理逻辑（60+ 字段与 15 字段同样处理）
+
+---
+
+## CTP_ENUM_ITEM.id 是唯一铁律
+
+原因：
+
+- 下拉框字段存的是 CTP_ENUM_ITEM.id
+- CTP_ENUM_ITEM.id 在系统中是全局唯一的
+- FORMMAIN_XXXX.fieldXXXX = CTP_ENUM_ITEM.id 是唯一关联规则
+- 不需要按 enumId 区分不同枚举类型
+
+决定：
+
+- 下拉字段 JOIN 规则：FORMMAIN_XXXX.fieldXXXX = CTP_ENUM_ITEM.id
+- 不需要额外的 enumId 过滤条件
+- AI 生成 SQL 时直接使用此规则
+
+---
+
+## 附件字段只查 ID + filename
+
+原因：
+
+- 附件表 CTP_ATTACHMENT 存储附件元数据
+- 业务场景只需要查询附件 ID 和文件名
+- 不需要查询附件内容（二进制）
+
+决定：
+
+- 附件 JOIN 基础版：LEFT JOIN CTP_ATTACHMENT ON sub_reference = field
+- 只查询 ID 和 FILENAME
+- 不查询附件内容
+
+---
+
+## 选多人字段处理（多选 ID 逗号分隔）
+
+原因：
+
+- OA 表单中"选人"字段支持多选
+- 多选时，字段存的是多个 ID 用逗号分隔，如 "123,456,789"
+- 字段类型可能是 VARCHAR 或 NUMBER
+- 不能直接 JOIN ORG_MEMBER，需要先拆分成多行
+
+决定：
+
+- 使用 REGEXP_SUBSTR + CONNECT BY 拆分逗号分隔的 ID
+- JOIN ORG_MEMBER 取 name
+- 使用 LISTAGG 聚合多个人名（用"、"分隔）
+- 字段类型为 VARCHAR 时，需要 TO_CHAR 兼容
+
+SQL 模板：
+
+```sql
+WITH split_ids AS (
+    SELECT
+        a.id AS main_id,
+        REGEXP_SUBSTR(a.fieldXXXX, '[^,]+', 1, LEVEL) AS member_id
+    FROM FORMMAIN_XXXX a
+    WHERE a.fieldXXXX IS NOT NULL
+    CONNECT BY REGEXP_SUBSTR(a.fieldXXXX, '[^,]+', 1, LEVEL) IS NOT NULL
+        AND PRIOR a.id = a.id
+        AND PRIOR SYS_GUID() IS NOT NULL
+),
+name_agg AS (
+    SELECT
+        s.main_id,
+        LISTAGG(m.name, '、') WITHIN GROUP (ORDER BY m.name) AS display_name
+    FROM split_ids s
+    JOIN ORG_MEMBER m ON TO_CHAR(m.id) = s.member_id
+    GROUP BY s.main_id
+)
+SELECT n.display_name AS 选多人姓名
+FROM FORMMAIN_XXXX a
+LEFT JOIN name_agg n ON n.main_id = a.id
+```
+
+---
+
+## VARCHAR 字段存 ID 需要 TO_CHAR 兼容
+
+原因：
+
+- 部分表单的选人/选部门/下拉字段类型是 VARCHAR 而非 NUMBER
+- ORG_MEMBER.id / ORG_UNIT.id / CTP_ENUM_ITEM.id 是 NUMBER
+- 直接比较 VARCHAR 和 NUMBER 可能导致类型不匹配
+
+决定：
+
+- 当字段类型为 VARCHAR 时，JOIN 条件使用 TO_CHAR(id) = field
+- 当字段类型为 NUMBER 时，直接比较 id = field
+- AI 生成 SQL 时应根据字段类型自动选择
+
+---
+
+## ORG_MEMBER 选人字段 JOIN 规范
+
+原因：
+
+- OA 表单选人字段存储 ORG_MEMBER.ID，字段类型可能是 VARCHAR
+- ID 为超长数字（如 8743904071964707111），且可能为负数（如 -820787101123853929）
+- 直接用数字比较会导致类型不匹配或精度丢失
+- 查询人员时需要默认过滤离职/停用/已删除账号
+
+决定：
+
+- **统一使用 TO_CHAR 兼容**：`TO_CHAR(ORG_MEMBER.ID) = formmain_xxxx.fieldxxxx`
+- 禁止直接 `ORG_MEMBER.ID = fieldxxxx`
+- 查询 ORG_MEMBER 时默认加：`STATE = 1 AND IS_ENABLE = 1 AND IS_DELETED = 0`
+- ORG_MEMBER 关联部门：`ORG_DEPARTMENT_ID = ORG_UNIT.ID`
+- ORG_MEMBER 关联岗位：`ORG_POST_ID = ORG_POST.ID`
+- 系统表数据字典存放在 `knowledge/system_tables/` 目录
+
+---
+
+## ORG_UNIT 选部门字段 JOIN 规范
+
+原因：
+
+- OA 表单选部门字段存储 ORG_UNIT.ID，字段类型可能是 VARCHAR
+- ID 为超长数字且可能为负数，直接数字比较会导致类型不匹配
+- 企业实际使用中 ORG_UNIT 仅作为部门表，不考虑 Account/Team/Group 等类型
+- AI 应直接用 NAME 匹配，无需理解复杂组织模型
+
+决定：
+
+- **统一使用 TO_CHAR 兼容**：`TO_CHAR(ORG_UNIT.ID) = formmain_xxxx.fieldxxxx`
+- 禁止直接 `ORG_UNIT.ID = fieldxxxx`
+- 查询 ORG_UNIT 时默认加：`IS_ENABLE = 1 AND IS_DELETED = 0`
+- ORG_UNIT 树形层级通过 PATH 字段实现（如一级 000000010007，二级 0000000100070001）
+- 企业真实使用方式优先级高于 OA 理论全模型
+
+---
+
+## ORG_POST 选岗位字段 JOIN 规范
+
+原因：
+
+- OA 表单选岗位字段存储 ORG_POST.ID，字段类型可能是 VARCHAR
+- ID 为超长数字且可能为正数或负数，不允许假设 ID 永远为正数
+- 不允许使用 UNSIGNED 类型思维
+
+决定：
+
+- **统一使用 TO_CHAR 兼容**：`TO_CHAR(ORG_POST.ID) = formmain_xxxx.fieldxxxx`
+- 禁止直接 `ORG_POST.ID = fieldxxxx`
+- 查询 ORG_POST 时默认加：`IS_ENABLE = 1 AND IS_DELETED = 0`
+- 遇到"选岗位/岗位/职位/主岗"关键词时，优先联想到 ORG_POST
+
+---
+
+## CTP_ENUM_ITEM 下拉字段 JOIN 规范
+
+原因：
+
+- OA 表单下拉字段存储 CTP_ENUM_ITEM.ID，不是 ENUMVALUE 或 CODE
+- 混淆会导致 AI 生成错误的 JOIN 条件
+- ENUMVALUE 是枚举内部值，不等于表单存储值
+- 不同枚举分类下 ENUMVALUE 可能重复，但 ID 全局唯一
+
+决定：
+
+- **统一使用 TO_CHAR 兼容**：`TO_CHAR(CTP_ENUM_ITEM.ID) = formmain_xxxx.fieldxxxx`
+- 禁止 `fieldxxxx = ENUMVALUE` 或 `fieldxxxx = CODE`
+- 默认显示 SHOWVALUE
+- 查询 CTP_ENUM_ITEM 时默认加：`STATE = 1`
+- 当前阶段不按 REF_ENUMID 过滤，直接按 ID JOIN
+- 多个下拉字段独立 JOIN，使用别名区分（如 cei_currency、cei_status）
+
+---
+
+## CTP_AFFAIR 与 COL_SUMMARY 职责划分
+
+原因：
+
+- 之前将 CTP_AFFAIR.STATE 理解为"流程整体状态"，这是不准确的
+- CTP_AFFAIR 是人员事项表，一个流程实例产生多条 affair（每个参与者一条）
+- CTP_AFFAIR.STATE 表示个人事项状态（待办/已办等），不是流程整体状态
+- 流程整体状态必须查 COL_SUMMARY.STATE
+
+决定：
+
+- **COL_SUMMARY**：流程实例主表，负责流程整体状态（STATE: 0=未结束, 1=终止, 2=待发, 3=已结束）
+- **CTP_AFFAIR**：人员事项表，负责待办/已办/节点状态（STATE: 1=待发, 2=已发, 3=待办, 4=已办, 5=撤销, 6=回退, 7=取回）
+- 查询"流程状态" → COL_SUMMARY.STATE
+- 查询"我的待办" → CTP_AFFAIR.STATE = 3
+- 查询"我的已办" → CTP_AFFAIR.STATE = 4
+- 标准链路：FORMMAIN.id = COL_SUMMARY.form_recordid，COL_SUMMARY.id = CTP_AFFAIR.OBJECT_ID
+
+---
+
+## COL_SUMMARY 流程状态查询规范
+
+原因：
+
+- COL_SUMMARY 是流程实例主表，一个流程实例对应一条记录
+- COL_SUMMARY.STATE 是流程整体状态的唯一权威字段
+- 之前将 CTP_AFFAIR.STATE 误解为流程状态，已修正
+
+决定：
+
+- 查询"流程状态""流程是否结束" → 必须用 COL_SUMMARY.STATE
+- 标准 JOIN：`FORMMAIN.ID = COL_SUMMARY.FORM_RECORDID`
+- 流程状态码：0=未结束, 1=终止, 2=待发, 3=已结束
+- 查发起人：`COL_SUMMARY.START_MEMBER_ID = TO_CHAR(ORG_MEMBER.ID)`
+
+---
+
+## CTP_COMMENT_ALL 审批记录查询规范
+
+原因：
+
+- CTP_COMMENT_ALL 存储审批意见和处理时间
+- 最常用场景：通过流程标题搜索审批记录
+- 表中已冗余存储审批人姓名、部门、岗位、单位，无需再 JOIN 组织表
+
+决定：
+
+- **最常用 JOIN**：`CTP_COMMENT_ALL.AFFAIR_ID = CTP_AFFAIR.ID`
+- **备选 JOIN**：`CTP_COMMENT_ALL.MODULE_ID = COL_SUMMARY.ID`
+- **查审批记录标准方式**：CTP_AFFAIR.SUBJECT LIKE '%关键词%' + LEFT JOIN CTP_COMMENT_ALL
+- CONTENT 存储处理意见，CREATE_NAME 存储审批人姓名
+- DEPARTMENT_NAME / POST_NAME / ACCOUNT_NAME 已冗余存储，无需再 JOIN
+
+---
+
+## START_DATE 作为默认时间过滤字段
+
+原因：
+
+- 所有 FORMMAIN_XXXX 表都有 START_DATE 字段，是系统自动记录的流程发起时间
+- 表单自定义的日期字段（如"申请日期"FIELD0003）不一定存在，不同表单字段不同
+- 用户说"5月数据"时，需要一个通用可靠的时间过滤字段
+- START_DATE 格式为 TIMESTAMP（如 2026-05-18 11:39:45.507000），可精确过滤
+
+决定：
+
+- **时间相关查询默认按 START_DATE 过滤**
+- 不要假设表单有"申请日期""创建日期"等自定义字段
+- 除非用户明确指定某个字段（如"按审批时间过滤"），否则一律用 START_DATE
+- 范围查询：`START_DATE >= TO_DATE('2026-05-01') AND START_DATE < TO_DATE('2026-06-01')`
+
+---
+
+## 数据字典前端录入 + 从表自动拆分
+
+原因：
+
+- 手工编写 JSON 数据字典效率低，容易出错
+- OA 表单设计器可复制原始文本，格式固定
+- 主从表需要分别存储，SQL Copilot 才能正确生成 JOIN
+
+决定：
+
+- 前端提供文本粘贴入口，后端自动解析 OA 原始文本
+- 主表存为 FORMMAIN_XXXX，从表存为 FORMSON_XXXX（独立记录）
+- 从表 JSON 包含 parentTable 字段，用于关联主表
+- SQL Copilot 选择主表时自动包含从表字段和 JOIN 规则

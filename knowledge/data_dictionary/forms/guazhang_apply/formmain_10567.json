@@ -1,0 +1,186 @@
+{
+  "formName": "挂账申请表",
+  "appCode": "FIN",
+  "tableName": "FORMMAIN_10567",
+  "tableType": "main",
+  "sonName": "FORMSON_10569",
+  "description": "财务挂账申请，用于供应商挂账、费用暂估等场景",
+  "fields": [
+    {
+      "fieldName": "ID",
+      "displayName": "主键",
+      "dbFinalType": "NUMBER",
+      "inputType": "系统",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0001",
+      "displayName": "申请编号",
+      "dbFinalType": "VARCHAR2(100)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0002",
+      "displayName": "申请人",
+      "dbFinalType": "NUMBER",
+      "inputType": "选人",
+      "isSpecial": true,
+      "isMultiSelect": false,
+      "refTable": "ORG_MEMBER",
+      "refKey": "ID",
+      "refDisplay": "NAME"
+    },
+    {
+      "fieldName": "FIELD0003",
+      "displayName": "申请部门",
+      "dbFinalType": "NUMBER",
+      "inputType": "选部门",
+      "isSpecial": true,
+      "isMultiSelect": false,
+      "refTable": "ORG_UNIT",
+      "refKey": "ID",
+      "refDisplay": "NAME"
+    },
+    {
+      "fieldName": "FIELD0004",
+      "displayName": "申请日期",
+      "dbFinalType": "DATE",
+      "inputType": "日期",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0005",
+      "displayName": "供应商名称",
+      "dbFinalType": "VARCHAR2(200)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0006",
+      "displayName": "挂账金额",
+      "dbFinalType": "NUMBER(14,2)",
+      "inputType": "金额",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0007",
+      "displayName": "币种",
+      "dbFinalType": "NUMBER",
+      "inputType": "下拉",
+      "isSpecial": true,
+      "isMultiSelect": false,
+      "refTable": "CTP_ENUM_ITEM",
+      "refKey": "ID",
+      "refDisplay": "SHOWVALUE"
+    },
+    {
+      "fieldName": "FIELD0008",
+      "displayName": "挂账类型",
+      "dbFinalType": "NUMBER",
+      "inputType": "下拉",
+      "isSpecial": true,
+      "isMultiSelect": false,
+      "refTable": "CTP_ENUM_ITEM",
+      "refKey": "ID",
+      "refDisplay": "SHOWVALUE"
+    },
+    {
+      "fieldName": "FIELD0009",
+      "displayName": "挂账事由",
+      "dbFinalType": "VARCHAR2(2000)",
+      "inputType": "文本域",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0010",
+      "displayName": "发票情况",
+      "dbFinalType": "NUMBER",
+      "inputType": "下拉",
+      "isSpecial": true,
+      "isMultiSelect": false,
+      "refTable": "CTP_ENUM_ITEM",
+      "refKey": "ID",
+      "refDisplay": "SHOWVALUE"
+    },
+    {
+      "fieldName": "FIELD0011",
+      "displayName": "预计冲账日期",
+      "dbFinalType": "DATE",
+      "inputType": "日期",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0012",
+      "displayName": "关联合同编号",
+      "dbFinalType": "VARCHAR2(100)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0013",
+      "displayName": "成本中心",
+      "dbFinalType": "NUMBER",
+      "inputType": "选部门",
+      "isSpecial": true,
+      "isMultiSelect": false,
+      "refTable": "ORG_UNIT",
+      "refKey": "ID",
+      "refDisplay": "NAME"
+    },
+    {
+      "fieldName": "FIELD0014",
+      "displayName": "备注",
+      "dbFinalType": "VARCHAR2(1000)",
+      "inputType": "文本域",
+      "isSpecial": false,
+      "isMultiSelect": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null
+    },
+    {
+      "fieldName": "FIELD0015",
+      "displayName": "附件",
+      "dbFinalType": "NUMBER",
+      "inputType": "上传附件",
+      "isSpecial": true,
+      "isMultiSelect": false,
+      "refTable": "CTP_ATTACHMENT",
+      "refKey": "ID",
+      "refDisplay": "FILENAME"
+    }
+  ]
+}

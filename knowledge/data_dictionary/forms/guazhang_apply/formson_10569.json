@@ -1,0 +1,121 @@
+{
+  "formName": "挂账申请表明细",
+  "appCode": "FIN",
+  "tableName": "FORMSON_10569",
+  "tableType": "son",
+  "mainName": "FORMMAIN_10567",
+  "description": "挂账申请表明细行，记录每笔挂账的费用明细",
+  "fields": [
+    {
+      "fieldName": "ID",
+      "displayName": "主键",
+      "dbFinalType": "NUMBER",
+      "inputType": "系统",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "MAINID",
+      "displayName": "主表ID",
+      "dbFinalType": "NUMBER",
+      "inputType": "系统",
+      "isSpecial": false,
+      "refTable": "FORMMAIN_10567",
+      "refKey": "ID",
+      "refDisplay": null,
+      "note": "关联主表，FORMSON.MAINID = FORMMAIN.ID",
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0001",
+      "displayName": "费用类型",
+      "dbFinalType": "NUMBER",
+      "inputType": "下拉",
+      "isSpecial": true,
+      "refTable": "CTP_ENUM_ITEM",
+      "refKey": "ID",
+      "refDisplay": "SHOWVALUE",
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0002",
+      "displayName": "费用说明",
+      "dbFinalType": "VARCHAR2(500)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0003",
+      "displayName": "挂账金额",
+      "dbFinalType": "NUMBER(14,2)",
+      "inputType": "金额",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0004",
+      "displayName": "税率",
+      "dbFinalType": "NUMBER(5,2)",
+      "inputType": "金额",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0005",
+      "displayName": "税额",
+      "dbFinalType": "NUMBER(14,2)",
+      "inputType": "金额",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0006",
+      "displayName": "不含税金额",
+      "dbFinalType": "NUMBER(14,2)",
+      "inputType": "金额",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0007",
+      "displayName": "成本科目",
+      "dbFinalType": "VARCHAR2(100)",
+      "inputType": "文本",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    },
+    {
+      "fieldName": "FIELD0008",
+      "displayName": "备注",
+      "dbFinalType": "VARCHAR2(500)",
+      "inputType": "文本域",
+      "isSpecial": false,
+      "refTable": null,
+      "refKey": null,
+      "refDisplay": null,
+      "isMultiSelect": false
+    }
+  ]
+}

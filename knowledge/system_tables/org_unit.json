@@ -1,0 +1,79 @@
+{
+  "tableName": "ORG_UNIT",
+  "tableType": "system",
+  "description": "OA 部门表（选部门字段关联），支持树形层级（PATH 字段）",
+  "primaryField": "ID",
+  "joinRule": "TO_CHAR(ORG_UNIT.ID) = {formTable}.{selectField}",
+  "defaultFilter": "IS_ENABLE = 1 AND IS_DELETED = 0",
+  "defaultFilterDescription": "默认只查启用、未删除的部门",
+  "fields": [
+    {
+      "fieldName": "ID",
+      "displayName": "主键",
+      "dbFinalType": "BIGINT",
+      "description": "部门唯一标识，OA 选部门字段存储此值。超长数字，可能为负数，必须按字符串兼容处理"
+    },
+    {
+      "fieldName": "NAME",
+      "displayName": "部门名称",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "部门名称，选部门字段关联后取此列作为显示值"
+    },
+    {
+      "fieldName": "CODE",
+      "displayName": "部门编号",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "部门编号"
+    },
+    {
+      "fieldName": "SHORT_NAME",
+      "displayName": "部门简称",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "部门简称"
+    },
+    {
+      "fieldName": "TYPE",
+      "displayName": "机构类型",
+      "dbFinalType": "VARCHAR(50)",
+      "description": "机构类型，企业实际只用 Department（部门）"
+    },
+    {
+      "fieldName": "PATH",
+      "displayName": "层级路径",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "部门层级路径，如一级部门 000000010007，二级部门 0000000100070001。可用于查询下级部门"
+    },
+    {
+      "fieldName": "IS_ENABLE",
+      "displayName": "启用状态",
+      "dbFinalType": "SMALLINT",
+      "description": "1=启用，0=停用"
+    },
+    {
+      "fieldName": "IS_DELETED",
+      "displayName": "删除标记",
+      "dbFinalType": "SMALLINT",
+      "description": "1=已删除，0=未删除"
+    },
+    {
+      "fieldName": "STATUS",
+      "displayName": "状态",
+      "dbFinalType": "SMALLINT",
+      "description": "0=正常，1=停用，2=删除"
+    },
+    {
+      "fieldName": "ORG_ACCOUNT_ID",
+      "displayName": "所属单位ID",
+      "dbFinalType": "BIGINT",
+      "description": "所属单位 ID"
+    }
+  ],
+  "relatedTables": [
+    {
+      "tableName": "ORG_MEMBER",
+      "relation": "ORG_UNIT.ID = ORG_MEMBER.ORG_DEPARTMENT_ID",
+      "description": "通过部门 ID 关联人员表，查部门下所有人员"
+    }
+  ],
+  "notes": "企业实际使用中 ORG_UNIT 仅作为部门表使用，不考虑 Account/Team/Group 等类型。PATH 字段支持树形层级查询（当前 Phase 2 不开发，仅沉淀知识）。"
+}

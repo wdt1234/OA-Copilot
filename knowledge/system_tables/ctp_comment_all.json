@@ -1,0 +1,151 @@
+{
+  "tableName": "CTP_COMMENT_ALL",
+  "tableType": "system",
+  "description": "OA 评论/审批意见表（流程处理时间 + 审批意见），用于查询审批记录、处理意见、审批耗时",
+  "primaryField": "ID",
+  "joinRule": "CTP_COMMENT_ALL.AFFAIR_ID = CTP_AFFAIR.ID",
+  "alternateJoinRule": "CTP_COMMENT_ALL.MODULE_ID = COL_SUMMARY.ID",
+  "fields": [
+    {
+      "fieldName": "ID",
+      "displayName": "主键",
+      "dbFinalType": "BIGINT",
+      "description": "审批意见唯一标识"
+    },
+    {
+      "fieldName": "AFFAIR_ID",
+      "displayName": "事项ID",
+      "dbFinalType": "BIGINT",
+      "description": "关联 CTP_AFFAIR.ID，用于关联审批事项。最常用的 JOIN 条件"
+    },
+    {
+      "fieldName": "MODULE_ID",
+      "displayName": "业务ID",
+      "dbFinalType": "BIGINT",
+      "description": "关联 COL_SUMMARY.ID，用于关联流程实例"
+    },
+    {
+      "fieldName": "MODULE_TYPE",
+      "displayName": "模块类型",
+      "dbFinalType": "SMALLINT",
+      "description": "所属功能模块"
+    },
+    {
+      "fieldName": "CTYPE",
+      "displayName": "类型",
+      "dbFinalType": "SMALLINT",
+      "description": "-2=草稿，-1=发起人附言，0=评论，1=回复"
+    },
+    {
+      "fieldName": "CONTENT",
+      "displayName": "处理意见",
+      "dbFinalType": "TEXT",
+      "description": "审批意见/评论内容（如：同意、驳回、请补充材料等）"
+    },
+    {
+      "fieldName": "RICH_CONTENT",
+      "displayName": "富文本内容",
+      "dbFinalType": "TEXT",
+      "description": "富文本格式的审批意见"
+    },
+    {
+      "fieldName": "CREATE_ID",
+      "displayName": "创建者ID",
+      "dbFinalType": "BIGINT",
+      "description": "审批人 ID，关联 ORG_MEMBER.ID"
+    },
+    {
+      "fieldName": "CREATE_NAME",
+      "displayName": "创建者姓名",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "审批人姓名（如：付超、宋洁），可能是人员名字也可能是超级节点名字"
+    },
+    {
+      "fieldName": "CREATE_DATE",
+      "displayName": "创建日期",
+      "dbFinalType": "DATETIME",
+      "description": "审批意见创建时间"
+    },
+    {
+      "fieldName": "MODIFY_DATE",
+      "displayName": "修改日期",
+      "dbFinalType": "DATETIME",
+      "description": "审批意见修改时间"
+    },
+    {
+      "fieldName": "DEPARTMENT_ID",
+      "displayName": "处理人部门ID",
+      "dbFinalType": "BIGINT",
+      "description": "处理人部门 ID，关联 ORG_UNIT.ID"
+    },
+    {
+      "fieldName": "DEPARTMENT_NAME",
+      "displayName": "处理人部门名称",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "处理人部门名称（如：财务管理）"
+    },
+    {
+      "fieldName": "POST_ID",
+      "displayName": "处理人岗位ID",
+      "dbFinalType": "BIGINT",
+      "description": "处理人岗位 ID，关联 ORG_POST.ID"
+    },
+    {
+      "fieldName": "POST_NAME",
+      "displayName": "处理人岗位名称",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "处理人岗位名称（如：成本会计、间接采购工程师）"
+    },
+    {
+      "fieldName": "ACCOUNT_NAME",
+      "displayName": "单位名称",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "处理人单位名称（如：西安康明斯发动机有限公司）"
+    },
+    {
+      "fieldName": "ROLE_NAME",
+      "displayName": "角色名称",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "处理人角色名称"
+    },
+    {
+      "fieldName": "EXT_ATT4",
+      "displayName": "态度code",
+      "dbFinalType": "VARCHAR(50)",
+      "description": "审批态度（如：是否同意的编码）"
+    },
+    {
+      "fieldName": "HAS_WF_OPERATION",
+      "displayName": "是否有流程操作",
+      "dbFinalType": "SMALLINT",
+      "description": "0=没有流程操作，1=有流程操作"
+    },
+    {
+      "fieldName": "SUB_TYPE",
+      "displayName": "意见子类型",
+      "dbFinalType": "SMALLINT",
+      "description": "意见子类型"
+    },
+    {
+      "fieldName": "REPLY_TO_ID",
+      "displayName": "被回复人ID",
+      "dbFinalType": "BIGINT",
+      "description": "被回复人 ID"
+    },
+    {
+      "fieldName": "REPLY_TO_NAME",
+      "displayName": "被回复人姓名",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "被回复人姓名"
+    }
+  ],
+  "criticalRules": [
+    "CTP_COMMENT_ALL 存储审批意见和处理时间",
+    "最常用 JOIN：CTP_COMMENT_ALL.AFFAIR_ID = CTP_AFFAIR.ID",
+    "也可用：CTP_COMMENT_ALL.MODULE_ID = COL_SUMMARY.ID",
+    "查审批记录的标准方式：通过 CTP_AFFAIR.SUBJECT（流程标题）搜索",
+    "CONTENT 字段存储处理意见（如：同意、驳回）",
+    "CREATE_NAME 字段直接存储审批人姓名，无需再 JOIN ORG_MEMBER",
+    "DEPARTMENT_NAME / POST_NAME / ACCOUNT_NAME 已冗余存储，无需再 JOIN"
+  ]
+}

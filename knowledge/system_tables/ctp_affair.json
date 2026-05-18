@@ -1,0 +1,150 @@
+{
+  "tableName": "CTP_AFFAIR",
+  "tableType": "system",
+  "description": "OA 人员事项表（待办/已办/节点状态），一个流程实例会产生多条 affair（每个参与者一条）",
+  "primaryField": "ID",
+  "joinRule": "CTP_AFFAIR.OBJECT_ID = COL_SUMMARY.ID",
+  "fields": [
+    {
+      "fieldName": "ID",
+      "displayName": "主键",
+      "dbFinalType": "BIGINT",
+      "description": "事项唯一标识"
+    },
+    {
+      "fieldName": "OBJECT_ID",
+      "displayName": "流程实例ID",
+      "dbFinalType": "BIGINT",
+      "description": "关联 COL_SUMMARY.ID，标识这条事项属于哪个流程实例"
+    },
+    {
+      "fieldName": "MEMBER_ID",
+      "displayName": "人员ID",
+      "dbFinalType": "BIGINT",
+      "description": "事项归属人，关联 ORG_MEMBER.ID"
+    },
+    {
+      "fieldName": "SENDER_ID",
+      "displayName": "发送人ID",
+      "dbFinalType": "BIGINT",
+      "description": "上一节点处理人，关联 ORG_MEMBER.ID"
+    },
+    {
+      "fieldName": "SUBJECT",
+      "displayName": "标题",
+      "dbFinalType": "VARCHAR(1024)",
+      "description": "事项标题（如：采购申请表-测试(王得童 2026-04-24)）"
+    },
+    {
+      "fieldName": "STATE",
+      "displayName": "事项状态",
+      "dbFinalType": "SMALLINT",
+      "description": "个人事项状态：1=待发，2=已发，3=待办，4=已办，5=撤销，6=回退，7=取回，8=竞争执行，15=终止，16=流程事项被删除"
+    },
+    {
+      "fieldName": "SUB_STATE",
+      "displayName": "子状态",
+      "dbFinalType": "SMALLINT",
+      "description": "子状态：0=正常，1=待发草稿，2=待发被回退，3=待发被撤销，11=待办未读，12=待办已读，13=待办暂存待办，14=待办知会等"
+    },
+    {
+      "fieldName": "CREATE_DATE",
+      "displayName": "创建时间",
+      "dbFinalType": "DATETIME",
+      "description": "事项创建时间"
+    },
+    {
+      "fieldName": "RECEIVE_TIME",
+      "displayName": "接收时间",
+      "dbFinalType": "DATETIME",
+      "description": "事项接收时间"
+    },
+    {
+      "fieldName": "COMPLETE_TIME",
+      "displayName": "完成时间",
+      "dbFinalType": "DATETIME",
+      "description": "事项完成时间"
+    },
+    {
+      "fieldName": "IS_FINISH",
+      "displayName": "是否结束",
+      "dbFinalType": "SMALLINT",
+      "description": "0=未结束，1=已结束"
+    },
+    {
+      "fieldName": "IS_DELETE",
+      "displayName": "是否删除",
+      "dbFinalType": "SMALLINT",
+      "description": "0=未删除，1=已删除"
+    },
+    {
+      "fieldName": "READ_STATE",
+      "displayName": "已读状态",
+      "dbFinalType": "SMALLINT",
+      "description": "0=未读，1=已读"
+    },
+    {
+      "fieldName": "IMPORTANT_LEVEL",
+      "displayName": "重要程度",
+      "dbFinalType": "SMALLINT",
+      "description": "1=普通，2=重要，3=非常重要"
+    },
+    {
+      "fieldName": "NODE_NAME",
+      "displayName": "节点名称",
+      "dbFinalType": "VARCHAR(500)",
+      "description": "当前流程节点名称"
+    },
+    {
+      "fieldName": "ACTIVITY_ID",
+      "displayName": "工作流节点ID",
+      "dbFinalType": "BIGINT",
+      "description": "流程节点 ID"
+    },
+    {
+      "fieldName": "FORM_RECORDID",
+      "displayName": "表单记录ID",
+      "dbFinalType": "BIGINT",
+      "description": "关联 FORMMAIN_xxxx.ID，直接定位业务数据"
+    },
+    {
+      "fieldName": "CASE_ID",
+      "displayName": "流程CASE_ID",
+      "dbFinalType": "BIGINT",
+      "description": "流程案例 ID"
+    },
+    {
+      "fieldName": "SUMMARY_STATE",
+      "displayName": "流程状态副本",
+      "dbFinalType": "SMALLINT",
+      "description": "状态：0=运行中，1=终止结束，2=取消，3=正常结束，4=被删除。注意：流程状态以 COL_SUMMARY.STATE 为准"
+    },
+    {
+      "fieldName": "ORG_DEPARTMENT_ID",
+      "displayName": "流程发起部门ID",
+      "dbFinalType": "BIGINT",
+      "description": "流程发起部门，关联 ORG_UNIT.ID"
+    },
+    {
+      "fieldName": "TRANSACTOR_ID",
+      "displayName": "代理人",
+      "dbFinalType": "BIGINT",
+      "description": "代理人 ID"
+    },
+    {
+      "fieldName": "PRE_APPROVER",
+      "displayName": "上一处理人",
+      "dbFinalType": "BIGINT",
+      "description": "上一处理人 ID，关联 ORG_MEMBER.ID"
+    }
+  ],
+  "criticalRules": [
+    "CTP_AFFAIR 是人员事项表，一个流程实例产生多条 affair（每个参与者一条）",
+    "CTP_AFFAIR.STATE 表示个人事项状态，不是流程整体状态",
+    "流程整体状态必须查 COL_SUMMARY.STATE",
+    "标准链路：FORMMAIN.id = COL_SUMMARY.form_recordid，COL_SUMMARY.id = CTP_AFFAIR.OBJECT_ID",
+    "待办查询：CTP_AFFAIR.STATE = 3",
+    "已办查询：CTP_AFFAIR.STATE = 4",
+    "某人审批记录：CTP_AFFAIR.MEMBER_ID = ORG_MEMBER.ID"
+  ]
+}

@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:sqlite:oa-copilot.db
+    driver-class-name: org.sqlite.JDBC
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      encoding: UTF-8
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+# AI 配置
+# 修改以下配置即可切换模型，兼容 OpenAI 格式的 API
+ai:
+  enabled: true                          # 改为 true 启用 AI
+  endpoint: https://token-plan-cn.xiaomimimo.com/v1/chat/completions  # API 地址
+  api-key: tp-c0tm8hj70akumhd217b2v1jyz4monobnk516vn4ty0yqc7rw             # API Key
+  model: mimo-v2.5-pro                 # 模型名称
+  timeout: 120                           # 超时秒数
+
+logging:
+  level:
+    com.oacopilot: DEBUG

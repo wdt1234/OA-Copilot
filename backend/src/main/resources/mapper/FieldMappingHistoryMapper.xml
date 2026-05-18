@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oacopilot.mapper.FieldMappingHistoryMapper">
+
+    <select id="findRecent" resultType="com.oacopilot.model.FieldMappingHistory">
+        SELECT id, form_id, input_fields, result_json, create_time
+        FROM field_mapping_history
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO field_mapping_history (form_id, input_fields, result_json, create_time)
+        VALUES (#{formId}, #{inputFields}, #{resultJson}, #{createTime})
+    </insert>
+
+</mapper>

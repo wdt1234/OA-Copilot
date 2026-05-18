@@ -1,0 +1,54 @@
+{
+  "tableName": "CTP_ENUM_ITEM",
+  "tableType": "system",
+  "description": "OA 下拉枚举项表（下拉字段关联），负责将枚举 ID 转换为中文显示值",
+  "primaryField": "ID",
+  "joinRule": "TO_CHAR(CTP_ENUM_ITEM.ID) = {formTable}.{selectField}",
+  "defaultFilter": "STATE = 1",
+  "defaultFilterDescription": "默认只查启用的枚举项（STATE: 0=停用, 1=启用, 3=删除）",
+  "fields": [
+    {
+      "fieldName": "ID",
+      "displayName": "主键",
+      "dbFinalType": "BIGINT",
+      "description": "枚举项唯一标识，OA 下拉字段存储此值。可能为正数或负数 BIGINT，必须按字符串兼容处理"
+    },
+    {
+      "fieldName": "REF_ENUMID",
+      "displayName": "枚举分类ID",
+      "dbFinalType": "BIGINT",
+      "description": "关联枚举分类表，用于区分不同枚举类型（币种/状态/是否等）。当前阶段默认只按 ID→SHOWVALUE JOIN，不按 REF_ENUMID 过滤"
+    },
+    {
+      "fieldName": "SHOWVALUE",
+      "displayName": "显示值",
+      "dbFinalType": "VARCHAR(255)",
+      "description": "用户看到的中文显示值（如：人民币、USD、紧急、是、否），下拉字段关联后取此列"
+    },
+    {
+      "fieldName": "ENUMVALUE",
+      "displayName": "枚举值",
+      "dbFinalType": "VARCHAR(255)",
+      "description": "枚举实际值（如：0、1、2）。注意：OA 下拉字段存的是 ID，不是 ENUMVALUE"
+    },
+    {
+      "fieldName": "STATE",
+      "displayName": "状态",
+      "dbFinalType": "SMALLINT",
+      "description": "0=停用，1=启用，3=删除"
+    },
+    {
+      "fieldName": "CODE",
+      "displayName": "枚举编码",
+      "dbFinalType": "VARCHAR(255)",
+      "description": "枚举值编码"
+    }
+  ],
+  "criticalRules": [
+    "OA 表单下拉字段存储的是 CTP_ENUM_ITEM.ID，不是 ENUMVALUE 或 CODE",
+    "JOIN 规则：TO_CHAR(CTP_ENUM_ITEM.ID) = formmain_xxxx.fieldxxxx",
+    "禁止 fieldxxxx = ENUMVALUE 或 fieldxxxx = CODE",
+    "默认显示 SHOWVALUE",
+    "当前阶段不按 REF_ENUMID 过滤，直接按 ID JOIN"
+  ]
+}

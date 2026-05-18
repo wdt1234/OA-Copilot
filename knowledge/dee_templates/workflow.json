@@ -1,0 +1,28 @@
+{
+  "workflowId": "wf_001",
+  "workflowName": "请假审批流程",
+  "description": "员工请假审批流程，包含发起、部门审批、人事备案三个节点",
+  "formId": "formmain_1001",
+  "steps": [
+    {
+      "stepId": 1,
+      "name": "发起申请",
+      "action": "submit",
+      "nextStep": 2
+    },
+    {
+      "stepId": 2,
+      "name": "部门审批",
+      "action": "approve",
+      "role": "dept_manager",
+      "nextStep": 3
+    },
+    {
+      "stepId": 3,
+      "name": "人事备案",
+      "action": "archive",
+      "role": "hr",
+      "nextStep": null
+    }
+  ]
+}
