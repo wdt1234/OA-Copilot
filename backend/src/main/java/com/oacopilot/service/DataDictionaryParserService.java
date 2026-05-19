@@ -30,7 +30,7 @@ public class DataDictionaryParserService {
     // 匹配空格分隔的字段行（无 Tab 时使用）
     // group1=field名 group2=字段类型 group3=长度 group4=显示名 group5=输入类型 group6=最终类型
     private static final Pattern FIELD_LINE_PATTERN = Pattern.compile(
-            "^(field\\d+)\\s+(\\S+)\\s+(\\d+)\\s+(.+?)\\s+(选人|选部门|下拉|单选|上传附件|日期时间|日期|文本域|序号|关联文档|流程处理意见|文本)\\s+(.+)$",
+            "^(field\\d+)\\s+(\\S+)\\s+(\\d+)\\s+(.+?)\\s+(选人|选多人|选部门|下拉|单选|上传附件|日期时间|日期|文本域|序号|关联文档|流程处理意见|表单自定义控件|文本)\\s+(.+)$",
             Pattern.CASE_INSENSITIVE);
 
     public DataDictionaryParserService(ObjectMapper objectMapper) {
@@ -182,8 +182,12 @@ public class DataDictionaryParserService {
                     cleaned.add(trimmed);
                 }
             }
+            // 标准 6 列：field, 类型, 长度, 显示名, 输入类型, 最终类型
+            // LONGTEXT 无长度时 5 列：field, 类型, 显示名, 输入类型, 最终类型
             if (cleaned.size() >= 6) {
                 return buildFieldInfo(cleaned.get(0), cleaned.get(3), cleaned.get(4), cleaned.get(5));
+            } else if (cleaned.size() == 5) {
+                return buildFieldInfo(cleaned.get(0), cleaned.get(2), cleaned.get(3), cleaned.get(4));
             }
         }
 
@@ -252,6 +256,7 @@ public class DataDictionaryParserService {
     private String mapInputType(String raw) {
         switch (raw) {
             case "选人": return "选人";
+            case "选多人": return "选多人";
             case "选部门": return "选部门";
             case "下拉": return "下拉";
             case "单选": return "单选";
@@ -262,19 +267,22 @@ public class DataDictionaryParserService {
             case "序号": return "序号";
             case "关联文档": return "关联文档";
             case "流程处理意见": return "流程处理意见";
+            case "表单自定义控件": return "表单自定义控件";
             default: return "文本";
         }
     }
 
     private boolean isSpecialField(String inputType) {
-        return "选人".equals(inputType) || "选部门".equals(inputType)
+        return "选人".equals(inputType) || "选多人".equals(inputType)
+                || "选部门".equals(inputType)
                 || "下拉".equals(inputType) || "单选".equals(inputType)
                 || "上传附件".equals(inputType);
     }
 
     private String getRefTable(String inputType) {
         switch (inputType) {
-            case "选人": return "ORG_MEMBER";
+            case "选人":
+            case "选多人": return "ORG_MEMBER";
             case "选部门": return "ORG_UNIT";
             case "下拉":
             case "单选": return "CTP_ENUM_ITEM";
