@@ -37,6 +37,14 @@
 - 时间相关查询默认按 START_DATE 过滤，不依赖表单自定义日期字段
 - 写入 CLAUDE.md OA 数据库查询规范 + prompt 模板
 
+### 数据字典解析器修复（3 个 bug）
+
+- CLOB/LONGTEXT 字段丢失：LONGTEXT 无长度时 cleaned 只有 5 列，新增 5 列兼容解析
+- CLOB/LONGTEXT → dbFinalType 统一归一化为 VARCHAR2(2000 CHAR)
+- 选多人字段识别：正则 + switch + isSpecial=true + refTable=ORG_MEMBER
+- 未知输入类型（表单自定义控件等）：dbFinalType 默认 VARCHAR2(2000 CHAR)
+- DECISIONS.md 新增 3 条决策：选多人/CLOB归一化/未知类型
+
 ### 单选框与下拉同等对待
 
 - DataDictionaryParserService：单选框标记为 isSpecial=true，refTable=CTP_ENUM_ITEM

@@ -242,6 +242,38 @@ AI 后续生成：
 - JOIN ORG_MEMBER 取 name
 - 使用 LISTAGG 聚合多个人名（用"、"分隔）
 - 字段类型为 VARCHAR 时，需要 TO_CHAR 兼容
+- **选多人与选人同等对待**：isSpecial=true，refTable=ORG_MEMBER
+
+---
+
+## CLOB/LONGTEXT 字段类型归一化
+
+原因：
+
+- OA 表单中"文本域"字段的数据库类型可能是 CLOB 或 LONGTEXT
+- CLOB 在 SQL 中不便于处理，实际场景用 VARCHAR2 即可满足
+- 解析器遇到 CLOB/LONGTEXT 应统一归一化
+
+决定：
+
+- CLOB/LONGTEXT → dbFinalType 统一为 `VARCHAR2(2000 CHAR)`
+- 不影响输入类型（inputType 仍为"文本域"）
+
+---
+
+## 未知输入类型的处理
+
+原因：
+
+- OA 表单设计器可能有非标准输入类型（如"表单自定义控件"）
+- 解析器不应因未知类型而报错或丢弃字段
+- 未知类型的数据库类型无法确定，需要安全默认值
+
+决定：
+
+- 未知输入类型 → dbFinalType 默认为 `VARCHAR2(2000 CHAR)`
+- inputType 保留原始值（如"表单自定义控件"），不做映射
+- 不标记为特殊字段（isSpecial=false）
 
 SQL 模板：
 

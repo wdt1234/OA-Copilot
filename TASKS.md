@@ -131,6 +131,9 @@
 - [x] 日期智能解析：用户输入"5月"→自动理解为今年5月，注入当前系统日期
 - [x] START_DATE 默认时间过滤：所有主表通用，不依赖表单自定义日期字段
 - [x] 单选框与下拉同等对待：isSpecial=true，JOIN CTP_ENUM_ITEM
+- [x] 选多人字段识别：isSpecial=true，refTable=ORG_MEMBER
+- [x] CLOB/LONGTEXT 归一化：dbFinalType → VARCHAR2(2000 CHAR)
+- [x] 未知输入类型兼容：dbFinalType 默认 VARCHAR2(2000 CHAR)
 
 ## knowledge/api_docs（API 文档库）
 
