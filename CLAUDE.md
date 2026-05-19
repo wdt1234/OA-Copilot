@@ -299,11 +299,11 @@ AI 后续生成：
 # OA 数据库查询规范（精简版・开发专用）
 
 ## 0. 字段类型约束（非常重要）
-- “流程处理意见”“文本域”在数据库中均为普通文本字段（VARCHAR2/CLOB 等），无特殊语义处理。
+- “流程处理意见””文本域”在数据库中均为普通文本字段（VARCHAR2/CLOB 等），无特殊语义处理。
 - 特殊字段仅有：
   - 选人：存 ORG_MEMBER.id
   - 选部门：存 ORG_UNIT.id
-  - 下拉：存 CTP_ENUM_ITEM.id
+  - 下拉/单选：存 CTP_ENUM_ITEM.id
   - 上传附件：极少用，走 CTP_ATTACHMENT（sub_reference=field）
 
 ## 1. 表单表规则

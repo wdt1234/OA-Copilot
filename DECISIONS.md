@@ -120,7 +120,7 @@ AI 后续生成：
 - 特殊字段仅 4 类：
   - 选人：存 ORG_MEMBER.id
   - 选部门：存 ORG_UNIT.id
-  - 下拉：存 CTP_ENUM_ITEM.id
+  - 下拉/单选：存 CTP_ENUM_ITEM.id
   - 上传附件：极少用，走 CTP_ATTACHMENT（sub_reference=field）
 
 ---

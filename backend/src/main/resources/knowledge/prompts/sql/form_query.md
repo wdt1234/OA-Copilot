@@ -8,7 +8,7 @@
 - 特殊字段**仅 4 类**：
   - 选人：存 ORG_MEMBER.id → 需 JOIN ORG_MEMBER 取 NAME
   - 选部门：存 ORG_UNIT.id → 需 JOIN ORG_UNIT 取 NAME
-  - 下拉：存 CTP_ENUM_ITEM.id → 需 JOIN CTP_ENUM_ITEM 取 SHOWVALUE
+  - 下拉/单选：存 CTP_ENUM_ITEM.id → 需 JOIN CTP_ENUM_ITEM 取 SHOWVALUE
   - 上传附件：极少用，走 CTP_ATTACHMENT（sub_reference=field）
 - **选多人**：字段存多个 ID 逗号分隔（如 "123,456,789"），需拆分后 JOIN
 

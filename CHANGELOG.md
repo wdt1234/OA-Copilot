@@ -37,6 +37,13 @@
 - 时间相关查询默认按 START_DATE 过滤，不依赖表单自定义日期字段
 - 写入 CLAUDE.md OA 数据库查询规范 + prompt 模板
 
+### 单选框与下拉同等对待
+
+- DataDictionaryParserService：单选框标记为 isSpecial=true，refTable=CTP_ENUM_ITEM
+- 解析正则支持"单选"类型
+- SQL 生成时单选框自动 JOIN CTP_ENUM_ITEM 取 SHOWVALUE
+- 更新 prompt 模板 + CLAUDE.md + DECISIONS.md
+
 ### 涉及文件
 
 - backend: DataDictionaryController.java, DataDictionaryParserService.java, KnowledgeService.java

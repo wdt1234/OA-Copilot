@@ -130,6 +130,7 @@
 - [x] SQL Copilot 自动注入从表：选择主表后自动包含从表字段和 JOIN
 - [x] 日期智能解析：用户输入"5月"→自动理解为今年5月，注入当前系统日期
 - [x] START_DATE 默认时间过滤：所有主表通用，不依赖表单自定义日期字段
+- [x] 单选框与下拉同等对待：isSpecial=true，JOIN CTP_ENUM_ITEM
 
 ## knowledge/api_docs（API 文档库）
 

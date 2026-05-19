@@ -30,7 +30,7 @@ public class DataDictionaryParserService {
     // 匹配空格分隔的字段行（无 Tab 时使用）
     // group1=field名 group2=字段类型 group3=长度 group4=显示名 group5=输入类型 group6=最终类型
     private static final Pattern FIELD_LINE_PATTERN = Pattern.compile(
-            "^(field\\d+)\\s+(\\S+)\\s+(\\d+)\\s+(.+?)\\s+(选人|选部门|下拉|上传附件|日期时间|日期|文本域|序号|关联文档|流程处理意见|文本)\\s+(.+)$",
+            "^(field\\d+)\\s+(\\S+)\\s+(\\d+)\\s+(.+?)\\s+(选人|选部门|下拉|单选|上传附件|日期时间|日期|文本域|序号|关联文档|流程处理意见|文本)\\s+(.+)$",
             Pattern.CASE_INSENSITIVE);
 
     public DataDictionaryParserService(ObjectMapper objectMapper) {
@@ -254,6 +254,7 @@ public class DataDictionaryParserService {
             case "选人": return "选人";
             case "选部门": return "选部门";
             case "下拉": return "下拉";
+            case "单选": return "单选";
             case "上传附件": return "上传附件";
             case "日期": return "日期";
             case "日期时间": return "日期时间";
@@ -267,14 +268,16 @@ public class DataDictionaryParserService {
 
     private boolean isSpecialField(String inputType) {
         return "选人".equals(inputType) || "选部门".equals(inputType)
-                || "下拉".equals(inputType) || "上传附件".equals(inputType);
+                || "下拉".equals(inputType) || "单选".equals(inputType)
+                || "上传附件".equals(inputType);
     }
 
     private String getRefTable(String inputType) {
         switch (inputType) {
             case "选人": return "ORG_MEMBER";
             case "选部门": return "ORG_UNIT";
-            case "下拉": return "CTP_ENUM_ITEM";
+            case "下拉":
+            case "单选": return "CTP_ENUM_ITEM";
             case "上传附件": return "CTP_ATTACHMENT";
             default: return null;
         }
