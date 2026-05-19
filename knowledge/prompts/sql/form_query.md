@@ -183,6 +183,13 @@ ORDER BY t.SUBJECT, t.RECEIVE_TIME DESC
 - 除非用户明确指定其他排序方式，否则一律用 `ORDER BY START_DATE DESC`
 - 多表关联时：`ORDER BY m.START_DATE DESC`
 
+### 全量查询规则（必须遵守）
+
+- 用户说"全量数据""全部字段""所有字段"时，**必须 SELECT 数据字典中的每一个字段**，不能省略
+- 即使字段很多（如 100+），也必须全部列出，不能用 SELECT * 或截断
+- 每个字段都用 `字段名 AS 中文别名` 格式
+- 特殊字段（选人/选部门/下拉/单选）额外 JOIN 取显示值
+
 ## 输出格式
 
 - 只返回 SQL 语句
