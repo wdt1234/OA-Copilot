@@ -206,12 +206,42 @@ public class DataDictionaryParserService {
         field.fieldName = fieldName.trim().toLowerCase();
         field.displayName = displayName.trim();
         field.inputType = inputType.trim();
-        field.dbFinalType = dbFinalType.trim();
+        field.dbFinalType = normalizeDbFinalType(inputType.trim(), dbFinalType.trim());
         if (field.fieldName.isEmpty() || field.displayName.isEmpty()) {
             log.warn("字段名或显示名为空: fieldName={}, displayName={}", field.fieldName, field.displayName);
             return null;
         }
         return field;
+    }
+
+    /**
+     * 归一化数据库最终类型
+     * - CLOB/LONGTEXT → VARCHAR2(2000 CHAR)
+     * - 未知输入类型 → VARCHAR2(2000 CHAR)
+     * - dbFinalType 为空 → VARCHAR2(2000 CHAR)
+     */
+    private String normalizeDbFinalType(String inputType, String dbFinalType) {
+        // CLOB/LONGTEXT 统一处理
+        if (dbFinalType != null && (dbFinalType.equalsIgnoreCase("CLOB") || dbFinalType.equalsIgnoreCase("LONGTEXT"))) {
+            return "VARCHAR2(2000 CHAR)";
+        }
+        // dbFinalType 为空
+        if (dbFinalType == null || dbFinalType.isEmpty()) {
+            return "VARCHAR2(2000 CHAR)";
+        }
+        // 未知输入类型，dbFinalType 也按 VARCHAR2(2000 CHAR) 处理
+        if (!isKnownInputType(inputType)) {
+            return "VARCHAR2(2000 CHAR)";
+        }
+        return dbFinalType;
+    }
+
+    private boolean isKnownInputType(String inputType) {
+        return "选人".equals(inputType) || "选多人".equals(inputType) || "选部门".equals(inputType)
+                || "下拉".equals(inputType) || "单选".equals(inputType) || "上传附件".equals(inputType)
+                || "日期".equals(inputType) || "日期时间".equals(inputType) || "文本域".equals(inputType)
+                || "序号".equals(inputType) || "关联文档".equals(inputType) || "流程处理意见".equals(inputType)
+                || "文本".equals(inputType);
     }
 
     private ObjectNode buildTableJson(TableSection section, String tableType) {
