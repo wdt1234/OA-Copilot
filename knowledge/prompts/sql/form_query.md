@@ -190,6 +190,27 @@ ORDER BY t.SUBJECT, t.RECEIVE_TIME DESC
 - 每个字段都用 `字段名 AS 中文别名` 格式
 - 特殊字段（选人/选部门/下拉/单选）额外 JOIN 取显示值
 
+### 明细表关联查询规则（必须遵守）
+
+- 用户说"包含明细表""含明细表"时，**每个明细表分别生成独立的 SQL**
+- 主表字段在每个 SQL 中都完整列出，明细表各自只 JOIN 自己的表
+- 输出格式：用注释分隔，如 `-- 主表+明细表1`、`-- 主表+明细表2`
+- 不要把多个明细表 JOIN 到同一条 SQL（会产生笛卡尔积）
+- 示例：
+```sql
+-- 主表+明细表1(内陆)
+SELECT m.FIELD0001, m.FIELD0002, ..., s1.FIELD0018, s1.FIELD0019
+FROM FORMMAIN_XXXX m
+LEFT JOIN FORMSON_YYYY s1 ON m.ID = s1.FORMMAIN_ID
+WHERE ...
+
+-- 主表+明细表2(进出口)
+SELECT m.FIELD0001, m.FIELD0002, ..., s2.FIELD0042, s2.FIELD0043
+FROM FORMMAIN_XXXX m
+LEFT JOIN FORMSON_ZZZZ s2 ON m.ID = s2.FORMMAIN_ID
+WHERE ...
+```
+
 ## 输出格式
 
 - 只返回 SQL 语句
