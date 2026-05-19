@@ -177,6 +177,12 @@ ORDER BY t.SUBJECT, t.RECEIVE_TIME DESC
 - 除非用户明确指定某个字段（如"按审批时间过滤"），否则一律用 START_DATE
 - 范围查询示例：`START_DATE >= TO_DATE('2026-05-01', 'YYYY-MM-DD') AND START_DATE < TO_DATE('2026-06-01', 'YYYY-MM-DD')`
 
+### 排序规则（必须遵守）
+
+- **所有 SQL 默认按 START_DATE DESC 倒序排列**（最新数据在前）
+- 除非用户明确指定其他排序方式，否则一律用 `ORDER BY START_DATE DESC`
+- 多表关联时：`ORDER BY m.START_DATE DESC`
+
 ## 输出格式
 
 - 只返回 SQL 语句
