@@ -1,5 +1,137 @@
 # CHANGELOG
 
+# 2026-05-20
+
+## 历史记录批量删除 + 快捷模板
+
+### 历史记录批量删除
+
+- 三个页面（SQL/DEE/字段映射）历史记录支持多选
+- 每条记录前添加 checkbox
+- 卡片头部添加「全选」和「批量删除」按钮
+- 选中记录高亮显示（浅蓝色背景）
+- 后端新增 `DELETE /api/xxx/history/batch` 批量删除接口
+
+### SQL Copilot 快捷模板从历史记录保存
+
+- 历史记录条目添加「存为模板」按钮（文件夹图标）
+- 模板存储在 localStorage，无需后端支持
+- 快捷模板区域分为「默认模板」和「我的模板」两组
+- 我的模板支持点击使用和删除
+
+### 涉及文件
+
+- backend: SqlHistoryMapper.java/xml, DeeHistoryMapper.java/xml, FieldMappingHistoryMapper.java/xml
+- backend: SqlCopilotController.java, DeeController.java, FieldMappingController.java
+- frontend: SqlCopilot.vue, DeeCopilot.vue, FieldMapper.vue
+
+---
+
+## 历史记录置顶功能
+
+### 功能说明
+
+- SQL Copilot、DEE Copilot、Field Mapper 三个页面的历史记录都支持置顶
+- 置顶记录排在列表最前面，背景色为浅黄色
+- 支持置顶/取消置顶、删除操作
+
+### 后端修改
+
+- 三个历史表（sql_history, dee_history, field_mapping_history）添加 is_pinned 字段
+- DatabaseMigration 自动为现有表添加字段
+- 三个 Mapper 添加 updatePinned 和 deleteById 方法
+- 三个 Controller 添加 PUT /{id}/pin 和 DELETE /{id} 接口
+- 查询排序：is_pinned DESC, create_time DESC
+
+### 前端修改
+
+- 三个页面历史记录列表添加置顶图标和删除按钮
+- 置顶记录显示黄色星星图标
+- 置顶记录背景色为浅黄色（#fffbe6）
+- 删除操作需要确认
+
+### 涉及文件
+
+- backend: schema.sql, DatabaseMigration.java
+- backend: SqlHistory.java, DeeHistory.java, FieldMappingHistory.java
+- backend: SqlHistoryMapper.java/xml, DeeHistoryMapper.java/xml, FieldMappingHistoryMapper.java/xml
+- backend: SqlCopilotController.java, DeeController.java, FieldMappingController.java
+- frontend: SqlCopilot.vue, DeeCopilot.vue, FieldMapper.vue
+
+---
+
+## SQL 异步处理功能
+
+### 异步任务机制
+
+- 新增 `sql_task` 表（SQLite），存储异步任务状态
+- 任务状态：PENDING → PROCESSING → COMPLETED / FAILED
+- 提交 API：`POST /api/sql/async`，立即返回任务 ID
+- 查询 API：`GET /api/sql/task/{taskId}`，轮询任务状态
+- 清理 API：`DELETE /api/sql/task?days=7`，清除 7 天前任务
+
+### 使用流程
+
+1. 前端提交请求：`POST /api/sql/async`
+2. 后端返回任务 ID（立即返回，不阻塞）
+3. 前端轮询状态：`GET /api/sql/task/{taskId}`（每 2-5 秒）
+4. 任务完成：返回 SQL 结果
+
+### 与缓存的协同
+
+- 提交异步任务时先检查缓存
+- 缓存命中：直接返回结果（taskId: "cached"）
+- 缓存未命中：创建异步任务，后台执行
+- 任务完成后自动存入缓存
+
+### 涉及文件
+
+- backend: schema.sql, SqlTask.java, SqlTaskMapper.java, SqlTaskMapper.xml
+- backend: Application.java（@EnableAsync）, SqlCopilotController.java
+
+---
+
+## SQL 缓存功能 + AI 超时优化 + Prompt 约束增强
+
+### SQL 缓存功能
+
+- 新增 `sql_cache` 表（SQLite），存储 SQL 生成结果
+- 缓存 Key：MD5(prompt + formCode)，7 天自动过期
+- 重复查询响应时间：101 秒 → 0.01 秒（提升 10000 倍）
+- 新增 API：`DELETE /api/sql/cache?days=0` 清除所有缓存
+- 新增 API：`DELETE /api/sql/cache?days=7` 清除 7 天前缓存
+
+### AI API 超时优化
+
+- 超时时间：120 秒 → 300 秒
+- 解决 FORMMAIN_9750（107 字段）查询超时问题
+
+### System Prompt 精简
+
+- 系统表摘要：从完整表格改为单行速查格式
+- 大表字段显示：>30 字段时只显示特殊字段表格 + 普通字段列表
+- Prompt 长度：15,324 → 8,000 字符（减少约 50%）
+
+### Oracle 11g 别名长度约束
+
+- 新增约束：中文别名必须 ≤ 10 个汉字（Oracle 11g 标识符 30 字节限制）
+- ≤ 10 字：保持原样
+- \> 10 字：自动缩减（保留核心语义）
+- 约束位置：移至 prompt 最前面（最高优先级）
+
+### CLOB 字段 GROUP BY 限制
+
+- 新增约束：CLOB 字段不能用于 GROUP BY、DISTINCT、ORDER BY
+- 解决方案：使用 SUBSTR(field, 1, 2000) 转换后再聚合
+
+### 涉及文件
+
+- backend: schema.sql, SqlCache.java, SqlCacheMapper.java, SqlCacheMapper.xml, SqlCopilotController.java
+- backend: application.yml（超时配置）, KnowledgeService.java（prompt 精简）
+- knowledge: prompts/sql/form_query.md（别名约束 + CLOB 限制）
+
+---
+
 # 2026-05-18
 
 ## 数据字典前端录入 + SQL Copilot 增强

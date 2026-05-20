@@ -39,11 +39,12 @@ public class AiService {
      * 调用 AI 生成内容
      * @param systemPrompt 系统提示词
      * @param userPrompt 用户输入
-     * @return AI 返回内容，未启用或失败返回 null
+     * @return AI 返回内容
+     * @throws RuntimeException 调用失败时抛出具体原因
      */
     public String generate(String systemPrompt, String userPrompt) {
         if (!aiProperties.isEnabled()) {
-            return null;
+            throw new RuntimeException("AI 未启用（ai.enabled=false）");
         }
 
         try {
@@ -67,18 +68,26 @@ public class AiService {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
             if (response.statusCode() != 200) {
+                String detail = response.body();
+                if (detail.length() > 200) detail = detail.substring(0, 200) + "...";
                 log.error("AI API 返回错误: status={}, body={}", response.statusCode(), response.body());
-                return null;
+                throw new RuntimeException("API 返回 HTTP " + response.statusCode() + ": " + detail);
             }
 
             JsonNode json = objectMapper.readTree(response.body());
             String content = json.path("choices").get(0).path("message").path("content").asText();
+            if (content == null || content.isEmpty()) {
+                log.warn("AI 返回空内容");
+                throw new RuntimeException("AI 返回空内容，响应: " + response.body().substring(0, Math.min(200, response.body().length())));
+            }
             log.info("AI 返回成功，原始长度: {}", content.length());
             return stripMarkdown(content);
 
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             log.error("AI API 调用失败: {}", e.getMessage());
-            return null;
+            throw new RuntimeException("AI 调用异常: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
     }
 
@@ -106,6 +115,7 @@ public class AiService {
      */
     public String generateSql(String prompt, String formCode) {
         String system = knowledgeService.buildSqlSystemPrompt(formCode);
+        log.info("SQL 生成 - formCode: [{}], system prompt 长度: {}", formCode, system.length());
         return generate(system, prompt);
     }
 

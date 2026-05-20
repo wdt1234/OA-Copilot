@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oacopilot.mapper.SqlTaskMapper">
+
+    <select id="findByTaskId" resultType="com.oacopilot.model.SqlTask">
+        SELECT id, task_id, prompt, form_code, status, sql_result, error_message, create_time, update_time
+        FROM sql_task
+        WHERE task_id = #{taskId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sql_task (task_id, prompt, form_code, status, create_time, update_time)
+        VALUES (#{taskId}, #{prompt}, #{formCode}, #{status}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE sql_task
+        SET status = #{status},
+            sql_result = #{sqlResult},
+            error_message = #{errorMessage},
+            update_time = datetime('now')
+        WHERE task_id = #{taskId}
+    </update>
+
+    <delete id="deleteExpired">
+        DELETE FROM sql_task
+        WHERE create_time &lt; datetime('now', '-' || #{days} || ' days')
+    </delete>
+
+</mapper>

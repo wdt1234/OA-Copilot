@@ -19,6 +19,9 @@ public class DatabaseMigration implements CommandLineRunner {
     @Override
     public void run(String... args) {
         addColumnIfNotExists("data_dictionary", "is_pinned", "INTEGER NOT NULL DEFAULT 0");
+        addColumnIfNotExists("sql_history", "is_pinned", "INTEGER NOT NULL DEFAULT 0");
+        addColumnIfNotExists("dee_history", "is_pinned", "INTEGER NOT NULL DEFAULT 0");
+        addColumnIfNotExists("field_mapping_history", "is_pinned", "INTEGER NOT NULL DEFAULT 0");
     }
 
     private void addColumnIfNotExists(String table, String column, String type) {

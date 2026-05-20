@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oacopilot.mapper.SqlCacheMapper">
+
+    <select id="findByKey" resultType="com.oacopilot.model.SqlCache">
+        SELECT id, cache_key, prompt, form_code, sql_result, create_time
+        FROM sql_cache
+        WHERE cache_key = #{cacheKey}
+          AND create_time &gt;= datetime('now', '-7 days')
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sql_cache (cache_key, prompt, form_code, sql_result, create_time)
+        VALUES (#{cacheKey}, #{prompt}, #{formCode}, #{sqlResult}, #{createTime})
+    </insert>
+
+    <delete id="deleteExpired">
+        DELETE FROM sql_cache
+        WHERE create_time &lt; datetime('now', '-' || #{days} || ' days')
+    </delete>
+
+    <delete id="deleteAll">
+        DELETE FROM sql_cache
+    </delete>
+
+</mapper>

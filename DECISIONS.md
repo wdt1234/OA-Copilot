@@ -482,3 +482,139 @@ LEFT JOIN name_agg n ON n.main_id = a.id
 - 主表存为 FORMMAIN_XXXX，从表存为 FORMSON_XXXX（独立记录）
 - 从表 JSON 包含 parentTable 字段，用于关联主表
 - SQL Copilot 选择主表时自动包含从表字段和 JOIN 规则
+
+---
+
+## SQL 缓存策略（SQLite vs Redis）
+
+原因：
+
+- AI 生成 SQL 响应时间长（100+ 秒），重复查询体验差
+- 需要缓存机制避免重复调用 AI
+- 选择缓存方案：SQLite 还是 Redis？
+
+决定：
+
+- **使用 SQLite 缓存表**，不引入 Redis
+- 理由：
+  - 当前已是 SQLite，零额外成本
+  - 企业内部工具，访问量不大
+  - 单机部署，不需要分布式缓存
+  - 符合"不过度架构"原则
+- 缓存 Key：MD5(prompt + formCode)
+- 过期时间：7 天自动过期
+- 后期如遇性能瓶颈再考虑 Redis
+
+---
+
+## Oracle 11g 别名长度约束
+
+原因：
+
+- Oracle 11g 标识符最长 30 字节
+- 中文字符在 UTF-8 下占 3 字节，因此中文别名最多 10 个汉字
+- OA 表单字段名普遍较长，容易超过限制
+- 违反会导致 ORA-00932 错误
+
+决定：
+
+- **≤ 10 个汉字的别名：保持原样，不做任何改动**
+- **> 10 个汉字的别名：必须缩减到 10 个汉字以内**
+- 缩减原则：保留核心语义，去掉冗余修饰词
+- 约束位置：放在 prompt 最前面（最高优先级）
+
+---
+
+## CLOB 字段 GROUP BY 限制
+
+原因：
+
+- Oracle 中 CLOB 字段不能用于 GROUP BY、DISTINCT、ORDER BY
+- OA 表单的"文本域""流程处理意见"等字段可能是 CLOB 类型
+- 违反会导致 ORA-00932 错误
+
+决定：
+
+- **CLOB 字段不能直接用于 GROUP BY、DISTINCT、ORDER BY**
+- 解决方案：
+  - 如果不需要聚合：去掉 GROUP BY，直接 SELECT
+  - 如果需要聚合：用 `SUBSTR(field, 1, 2000)` 转换后再 GROUP BY
+  - 如果需要去重：用 `SUBSTR(field, 1, 2000)` 转换后再 DISTINCT
+- 判断方法：数据字典中标记为"文本域"或"CLOB"的字段，大概率是 CLOB 类型
+
+---
+
+## SQL 异步处理机制
+
+原因：
+
+- AI 生成 SQL 响应时间长（100+ 秒），同步请求阻塞用户体验
+- 需要异步机制让用户可以继续操作，后台处理完成后通知
+- 选择实现方案：提交任务 + 轮询状态
+
+决定：
+
+- **采用异步任务机制**，不使用 WebSocket（过度复杂）
+- 流程：
+  1. 前端提交请求，后端立即返回任务 ID
+  2. 前端轮询任务状态（每 2-5 秒）
+  3. 任务完成后返回 SQL 结果
+- 与缓存协同：
+  - 提交时先检查缓存，命中直接返回
+  - 未命中创建异步任务，完成后自动存缓存
+- 任务状态：PENDING → PROCESSING → COMPLETED / FAILED
+- 任务过期：7 天自动清理
+
+---
+
+## 历史记录统一置顶功能
+
+原因：
+
+- SQL Copilot、DEE Copilot、Field Mapper 三个页面都有历史记录列表
+- 数据字典页面已有置顶功能，其他页面需要保持一致
+- 用户需要标记重要记录，方便快速访问
+
+决定：
+
+- **三个页面统一添加置顶/取消置顶功能**
+- 置顶记录排在列表最前面（ORDER BY is_pinned DESC, create_time DESC）
+- 置顶记录视觉区分：浅黄色背景 + 黄色星星图标
+- 删除操作需要确认（ElMessageBox.confirm）
+- 数据库：三个历史表统一添加 is_pinned 字段（INTEGER NOT NULL DEFAULT 0）
+- DatabaseMigration 自动为现有表添加字段（ALTER TABLE ADD COLUMN）
+
+---
+
+## 历史记录批量删除
+
+原因：
+
+- 逐条删除效率低，用户需要批量清理历史记录
+- 三个页面（SQL/DEE/字段映射）需要保持一致
+
+决定：
+
+- **三个页面统一添加多选 + 批量删除功能**
+- 每条记录前添加 checkbox，支持全选/取消全选
+- 选中后点击批量删除，弹出确认框
+- 后端新增 batch delete 接口，接收 ids 数组
+- 选中记录高亮显示（浅蓝色背景）
+
+---
+
+## SQL Copilot 快捷模板从历史记录保存
+
+原因：
+
+- 默认快捷模板是硬编码的，无法覆盖所有业务场景
+- 用户经常使用的查询应该可以快速复用
+- 不需要后端支持，localStorage 即可满足
+
+决定：
+
+- **历史记录条目添加「存为模板」按钮**
+- 模板存储在 localStorage（key: sql_copilot_templates）
+- 快捷模板区域分为「默认模板」和「我的模板」两组
+- 我的模板支持删除（closable tag）
+- 仅在 SQL Copilot 页面实现，DEE 和字段映射暂不添加

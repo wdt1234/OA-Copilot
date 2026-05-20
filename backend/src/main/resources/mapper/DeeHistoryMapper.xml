@@ -5,15 +5,34 @@
 <mapper namespace="com.oacopilot.mapper.DeeHistoryMapper">
 
     <select id="findRecent" resultType="com.oacopilot.model.DeeHistory">
-        SELECT id, template_type, description, result_json, create_time
+        SELECT id, template_type, description, result_json, is_pinned, create_time
         FROM dee_history
-        ORDER BY create_time DESC
+        ORDER BY is_pinned DESC, create_time DESC
         LIMIT #{limit}
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO dee_history (template_type, description, result_json, create_time)
-        VALUES (#{templateType}, #{description}, #{resultJson}, #{createTime})
+        INSERT INTO dee_history (template_type, description, result_json, is_pinned, create_time)
+        VALUES (#{templateType}, #{description}, #{resultJson}, #{isPinned}, #{createTime})
     </insert>
+
+    <update id="updatePinned">
+        UPDATE dee_history
+        SET is_pinned = #{isPinned}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM dee_history
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByIds">
+        DELETE FROM dee_history
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
 
 </mapper>

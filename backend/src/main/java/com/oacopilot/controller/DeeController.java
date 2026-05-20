@@ -74,6 +74,36 @@ public class DeeController {
         return deeHistoryMapper.findRecent(limit);
     }
 
+    @PutMapping("/history/{id}/pin")
+    public Map<String, Object> togglePin(@PathVariable Long id) {
+        DeeHistory record = deeHistoryMapper.findRecent(100).stream()
+                .filter(h -> h.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+        if (record == null) {
+            return Map.of("error", "记录不存在");
+        }
+        boolean newPinned = !record.isPinned();
+        deeHistoryMapper.updatePinned(id, newPinned);
+        return Map.of("message", newPinned ? "已置顶" : "已取消置顶");
+    }
+
+    @DeleteMapping("/history/batch")
+    public Map<String, Object> deleteHistoryBatch(@RequestBody Map<String, List<Long>> body) {
+        List<Long> ids = body.getOrDefault("ids", List.of());
+        if (ids.isEmpty()) {
+            return Map.of("deleted", 0);
+        }
+        int deleted = deeHistoryMapper.deleteByIds(ids);
+        return Map.of("deleted", deleted);
+    }
+
+    @DeleteMapping("/history/{id}")
+    public Map<String, Object> deleteHistory(@PathVariable Long id) {
+        deeHistoryMapper.deleteById(id);
+        return Map.of("message", "已删除");
+    }
+
     @PostMapping("/generate")
     public Map<String, Object> generate(@RequestBody Map<String, String> body) {
         String templateType = body.getOrDefault("templateType", "workflow");

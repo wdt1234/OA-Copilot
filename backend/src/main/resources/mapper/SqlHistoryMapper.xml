@@ -5,15 +5,34 @@
 <mapper namespace="com.oacopilot.mapper.SqlHistoryMapper">
 
     <select id="findRecent" resultType="com.oacopilot.model.SqlHistory">
-        SELECT id, prompt, sql_result, create_time
+        SELECT id, prompt, sql_result, is_pinned, create_time
         FROM sql_history
-        ORDER BY create_time DESC
+        ORDER BY is_pinned DESC, create_time DESC
         LIMIT #{limit}
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO sql_history (prompt, sql_result, create_time)
-        VALUES (#{prompt}, #{sqlResult}, #{createTime})
+        INSERT INTO sql_history (prompt, sql_result, is_pinned, create_time)
+        VALUES (#{prompt}, #{sqlResult}, #{isPinned}, #{createTime})
     </insert>
+
+    <update id="updatePinned">
+        UPDATE sql_history
+        SET is_pinned = #{isPinned}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM sql_history
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByIds">
+        DELETE FROM sql_history
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
 
 </mapper>

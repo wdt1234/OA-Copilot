@@ -189,29 +189,73 @@ public class KnowledgeService {
 
     /**
      * 追加字段表格到 StringBuilder
+     * 优化：大表使用紧凑格式，减少 prompt 长度
      */
     private void appendFieldTable(StringBuilder sb, JsonNode fields) {
-        sb.append("| 字段名 | 显示名 | 类型 | 特殊字段 | 多选 | 关联表 |\n");
-        sb.append("|--------|--------|------|----------|------|--------|\n");
+        // 分离特殊字段和普通字段
+        java.util.List<JsonNode> specialFields = new java.util.ArrayList<>();
+        java.util.List<String> normalFieldEntries = new java.util.ArrayList<>();
 
         for (JsonNode field : fields) {
             String fieldName = field.path("fieldName").asText();
             if ("ID".equals(fieldName) || "MAINID".equals(fieldName)) continue;
 
-            String displayName = field.path("displayName").asText();
-            String inputType = field.path("inputType").asText();
             boolean isSpecial = field.path("isSpecial").asBoolean();
-            boolean isMultiSelect = field.path("isMultiSelect").asBoolean();
-            String refTable = field.path("refTable").asText("—");
+            String displayName = field.path("displayName").asText();
 
-            sb.append("| ").append(fieldName)
-              .append(" | ").append(displayName)
-              .append(" | ").append(inputType)
-              .append(" | ").append(isSpecial ? "是" : "否")
-              .append(" | ").append(isMultiSelect ? "是" : "否")
-              .append(" | ").append(refTable)
-              .append(" |\n");
+            if (isSpecial) {
+                specialFields.add(field);
+            } else {
+                // 紧凑格式：字段名(显示名)
+                normalFieldEntries.add(fieldName + "(" + displayName + ")");
+            }
         }
+
+        // 小表（≤30字段）：显示完整表格
+        if (fields.size() <= 30) {
+            sb.append("| 字段名 | 显示名 | 类型 | 关联表 |\n");
+            sb.append("|--------|--------|------|--------|\n");
+
+            for (JsonNode field : fields) {
+                String fieldName = field.path("fieldName").asText();
+                if ("ID".equals(fieldName) || "MAINID".equals(fieldName)) continue;
+
+                String displayName = field.path("displayName").asText();
+                String inputType = field.path("inputType").asText();
+                String refTable = field.path("refTable").asText("—");
+
+                sb.append("| ").append(fieldName)
+                  .append(" | ").append(displayName)
+                  .append(" | ").append(inputType)
+                  .append(" | ").append(refTable)
+                  .append(" |\n");
+            }
+            return;
+        }
+
+        // 大表（>30字段）：紧凑格式
+        // 特殊字段：单行格式
+        if (!specialFields.isEmpty()) {
+            sb.append("**特殊字段（需JOIN）：**\n");
+            for (JsonNode field : specialFields) {
+                String fieldName = field.path("fieldName").asText();
+                String displayName = field.path("displayName").asText();
+                String inputType = field.path("inputType").asText();
+                String refTable = field.path("refTable").asText("—");
+
+                sb.append("- ").append(fieldName)
+                  .append(" | ").append(displayName)
+                  .append(" | ").append(inputType)
+                  .append(" | ").append(refTable)
+                  .append("\n");
+            }
+            sb.append("\n");
+        }
+
+        // 普通字段：逗号分隔列表
+        sb.append("**普通字段（").append(normalFieldEntries.size()).append("个）：**\n");
+        sb.append(String.join(", ", normalFieldEntries));
+        sb.append("\n");
     }
 
     /**
@@ -368,6 +412,7 @@ public class KnowledgeService {
 
     /**
      * 构建系统表摘要（注入 SQL Prompt）
+     * 优化：只注入关键信息，减少 prompt 长度
      */
     private String buildSystemTableSummary() {
         java.util.Map<String, JsonNode> tables = getAllSystemTables();
@@ -376,49 +421,18 @@ public class KnowledgeService {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\n## 系统特殊表参考\n\n");
+        sb.append("\n\n## 系统表速查\n\n");
 
         for (java.util.Map.Entry<String, JsonNode> entry : tables.entrySet()) {
             JsonNode node = entry.getValue();
             String tableName = node.path("tableName").asText();
             String description = node.path("description").asText();
             String joinRule = node.path("joinRule").asText("");
-            String defaultFilter = node.path("defaultFilter").asText("");
 
-            sb.append("### ").append(tableName).append("\n");
-            sb.append("- 用途：").append(description).append("\n");
+            sb.append("- **").append(tableName).append("**：").append(description);
             if (!joinRule.isEmpty()) {
-                sb.append("- JOIN：`").append(joinRule).append("`\n");
+                sb.append(" | JOIN: `").append(joinRule).append("`");
             }
-            if (!defaultFilter.isEmpty()) {
-                sb.append("- 默认过滤：`").append(defaultFilter).append("`\n");
-            }
-
-            // 核心字段
-            JsonNode fields = node.path("fields");
-            if (fields.isArray() && fields.size() > 0) {
-                sb.append("- 核心字段：");
-                int count = 0;
-                for (JsonNode field : fields) {
-                    if (count >= 8) {
-                        sb.append("...");
-                        break;
-                    }
-                    if (count > 0) sb.append(", ");
-                    sb.append(field.path("fieldName").asText());
-                    count++;
-                }
-                sb.append("\n");
-            }
-
-            // 关键规则
-            JsonNode rules = node.path("criticalRules");
-            if (rules.isArray()) {
-                for (JsonNode rule : rules) {
-                    sb.append("- ").append(rule.asText()).append("\n");
-                }
-            }
-
             sb.append("\n");
         }
 

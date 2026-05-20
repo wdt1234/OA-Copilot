@@ -12,4 +12,10 @@ public interface SqlHistoryMapper {
     List<SqlHistory> findRecent(@Param("limit") int limit);
 
     int insert(SqlHistory record);
+
+    int updatePinned(@Param("id") Long id, @Param("isPinned") boolean isPinned);
+
+    int deleteById(@Param("id") Long id);
+
+    int deleteByIds(@Param("ids") List<Long> ids);
 }

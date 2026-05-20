@@ -26,8 +26,11 @@ ai:
   endpoint: https://token-plan-cn.xiaomimimo.com/v1/chat/completions  # API 地址
   api-key: tp-c0tm8hj70akumhd217b2v1jyz4monobnk516vn4ty0yqc7rw             # API Key
   model: mimo-v2.5-pro                 # 模型名称
-  timeout: 120                           # 超时秒数
+  timeout: 300                           # 超时秒数（prompt 较长时需要更多时间）
 
 logging:
   level:
     com.oacopilot: DEBUG
+  charset:
+    console: UTF-8
+    file: UTF-8

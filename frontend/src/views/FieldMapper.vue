@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Star, StarFilled, Delete } from '@element-plus/icons-vue'
 import axios from 'axios'
 
 // ── 状态 ──
@@ -11,6 +12,8 @@ const resultJson = ref('')
 const mappingFields = ref([])
 const generating = ref(false)
 const showTable = ref(true)
+const selectedIds = ref([])
+const selectMode = ref(false)
 
 // ── 快捷表单 ──
 
@@ -36,6 +39,7 @@ async function loadHistory() {
       id: item.id,
       formId: item.formId,
       result: item.resultJson,
+      isPinned: item.pinned,
       time: formatTime(item.createTime)
     }))
   } catch (e) {
@@ -48,6 +52,69 @@ function formatTime(timeStr) {
   const parts = timeStr.split('T')
   if (parts.length === 2) return parts[1].substring(0, 5)
   return timeStr
+}
+
+async function togglePin(item) {
+  try {
+    await axios.put(`/api/field-mapping/history/${item.id}/pin`)
+    await loadHistory()
+    ElMessage.success(item.isPinned ? '已取消置顶' : '已置顶')
+  } catch (e) {
+    ElMessage.error('操作失败')
+  }
+}
+
+async function deleteHistory(item) {
+  try {
+    await ElMessageBox.confirm(
+      '确定删除该记录？',
+      '确认删除',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    )
+    await axios.delete(`/api/field-mapping/history/${item.id}`)
+    await loadHistory()
+    ElMessage.success('已删除')
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+function toggleSelect(id) {
+  const idx = selectedIds.value.indexOf(id)
+  if (idx >= 0) {
+    selectedIds.value.splice(idx, 1)
+  } else {
+    selectedIds.value.push(id)
+  }
+}
+
+function toggleSelectAll() {
+  if (selectedIds.value.length === history.value.length) {
+    selectedIds.value = []
+  } else {
+    selectedIds.value = history.value.map(h => h.id)
+  }
+}
+
+async function batchDelete() {
+  if (selectedIds.value.length === 0) return
+  try {
+    await ElMessageBox.confirm(
+      `确定删除选中的 ${selectedIds.value.length} 条记录？`,
+      '确认批量删除',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    )
+    await axios.delete('/api/field-mapping/history/batch', { data: { ids: selectedIds.value } })
+    selectedIds.value = []
+    await loadHistory()
+    ElMessage.success('批量删除完成')
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('批量删除失败')
+    }
+  }
 }
 
 // ── 生成 ──
@@ -225,7 +292,34 @@ onMounted(() => {
       <el-col :xs="24" :lg="7">
         <el-card shadow="never" class="history-card">
           <template #header>
-            <span class="card-title">历史记录</span>
+            <div class="history-header">
+              <span class="card-title">历史记录</span>
+              <div class="history-header-actions">
+                <el-button
+                  v-if="history.length > 0 && !selectMode"
+                  size="small"
+                  text
+                  @click="selectMode = true"
+                >
+                  选择
+                </el-button>
+                <template v-if="selectMode">
+                  <el-button size="small" text @click="toggleSelectAll">
+                    {{ selectedIds.length === history.length ? '取消全选' : '全选' }}
+                  </el-button>
+                  <el-button
+                    v-if="selectedIds.length > 0"
+                    type="danger"
+                    size="small"
+                    text
+                    @click="batchDelete"
+                  >
+                    删除 ({{ selectedIds.length }})
+                  </el-button>
+                  <el-button size="small" text @click="selectMode = false; selectedIds = []">取消</el-button>
+                </template>
+              </div>
+            </div>
           </template>
 
           <div v-if="history.length === 0" class="history-empty">
@@ -237,11 +331,42 @@ onMounted(() => {
               v-for="item in history"
               :key="item.id"
               class="history-item"
-              @click="loadFromHistory(item)"
+              :class="{ 'history-item-pinned': item.isPinned, 'history-item-selected': selectedIds.includes(item.id) }"
             >
-              <div class="history-meta">
-                <span class="history-form">{{ item.formId }}</span>
-                <span class="history-time">{{ item.time }}</span>
+              <el-checkbox
+                v-if="selectMode"
+                :model-value="selectedIds.includes(item.id)"
+                @change="toggleSelect(item.id)"
+                @click.stop
+                class="history-checkbox"
+              />
+              <div class="history-content" @click="loadFromHistory(item)">
+                <div class="history-meta">
+                  <span class="history-form">
+                    <el-icon v-if="item.isPinned" class="pin-icon"><StarFilled /></el-icon>
+                    {{ item.formId }}
+                  </span>
+                  <span class="history-time">{{ item.time }}</span>
+                </div>
+              </div>
+              <div v-if="!selectMode" class="history-actions">
+                <el-button
+                  :type="item.isPinned ? 'warning' : 'info'"
+                  size="small"
+                  text
+                  @click.stop="togglePin(item)"
+                  :title="item.isPinned ? '取消置顶' : '置顶'"
+                >
+                  <el-icon><StarFilled v-if="item.isPinned" /><Star v-else /></el-icon>
+                </el-button>
+                <el-button
+                  type="danger"
+                  size="small"
+                  text
+                  @click.stop="deleteHistory(item)"
+                >
+                  <el-icon><Delete /></el-icon>
+                </el-button>
               </div>
             </div>
           </div>
@@ -347,6 +472,27 @@ onMounted(() => {
   height: 100%;
 }
 
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-header-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.history-checkbox {
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.history-item-selected {
+  background-color: #e6f7ff !important;
+}
+
 .history-list {
   display: flex;
   flex-direction: column;
@@ -356,12 +502,33 @@ onMounted(() => {
 .history-item {
   padding: 10px 12px;
   border-radius: 4px;
-  cursor: pointer;
   transition: background-color 0.15s;
+  display: flex;
+  align-items: center;
+  position: relative;
 }
 
 .history-item:hover {
   background-color: #f5f7fa;
+}
+
+.history-item:hover .history-actions {
+  opacity: 1;
+}
+
+.history-item-pinned {
+  background-color: #fffbe6;
+}
+
+.history-item-pinned:hover {
+  background-color: #fff7cc;
+}
+
+.history-content {
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
+  padding-right: 60px;
 }
 
 .history-meta {
@@ -376,9 +543,28 @@ onMounted(() => {
   font-weight: 500;
 }
 
+.pin-icon {
+  color: #faad14;
+  margin-right: 4px;
+  font-size: 12px;
+}
+
 .history-time {
   font-size: 12px;
   color: #bfbfbf;
+}
+
+.history-actions {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  background: inherit;
+  padding-left: 8px;
 }
 
 .history-empty {

@@ -7,6 +7,7 @@ public class FieldMappingHistory {
     private String formId;
     private String inputFields;
     private String resultJson;
+    private boolean isPinned;
     private LocalDateTime createTime;
 
     public Long getId() { return id; }
@@ -20,6 +21,9 @@ public class FieldMappingHistory {
 
     public String getResultJson() { return resultJson; }
     public void setResultJson(String resultJson) { this.resultJson = resultJson; }
+
+    public boolean isPinned() { return isPinned; }
+    public void setPinned(boolean pinned) { isPinned = pinned; }
 
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
