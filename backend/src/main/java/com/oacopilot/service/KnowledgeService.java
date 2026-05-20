@@ -188,6 +188,32 @@ public class KnowledgeService {
     }
 
     /**
+     * 缩短别名到10个汉字以内（Oracle 11g限制）
+     * 策略：去掉"最新版/最新/新版"等前缀，保留核心语义
+     */
+    private String shortenAlias(String displayName) {
+        if (displayName == null || displayName.length() <= 10) {
+            return displayName;
+        }
+
+        // 去掉常见前缀
+        String result = displayName;
+        String[] prefixes = {"最新版", "最新", "新版", "当前"};
+        for (String prefix : prefixes) {
+            if (result.startsWith(prefix) && result.length() > 10) {
+                result = result.substring(prefix.length());
+            }
+        }
+
+        // 如果还是超过10字，截取前10字
+        if (result.length() > 10) {
+            result = result.substring(0, 10);
+        }
+
+        return result;
+    }
+
+    /**
      * 追加字段表格到 StringBuilder
      * 优化：大表使用紧凑格式，减少 prompt 长度
      */
@@ -206,8 +232,9 @@ public class KnowledgeService {
             if (isSpecial) {
                 specialFields.add(field);
             } else {
-                // 紧凑格式：字段名(显示名)
-                normalFieldEntries.add(fieldName + "(" + displayName + ")");
+                // 紧凑格式：字段名(显示名)，自动缩短超长别名
+                String shortName = shortenAlias(displayName);
+                normalFieldEntries.add(fieldName + "(" + shortName + ")");
             }
         }
 
@@ -220,7 +247,7 @@ public class KnowledgeService {
                 String fieldName = field.path("fieldName").asText();
                 if ("ID".equals(fieldName) || "MAINID".equals(fieldName)) continue;
 
-                String displayName = field.path("displayName").asText();
+                String displayName = shortenAlias(field.path("displayName").asText());
                 String inputType = field.path("inputType").asText();
                 String refTable = field.path("refTable").asText("—");
 
@@ -239,7 +266,7 @@ public class KnowledgeService {
             sb.append("**特殊字段（需JOIN）：**\n");
             for (JsonNode field : specialFields) {
                 String fieldName = field.path("fieldName").asText();
-                String displayName = field.path("displayName").asText();
+                String displayName = shortenAlias(field.path("displayName").asText());
                 String inputType = field.path("inputType").asText();
                 String refTable = field.path("refTable").asText("—");
 
