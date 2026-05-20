@@ -448,13 +448,15 @@ onMounted(() => {
                 @click.stop
                 class="history-checkbox"
               />
-              <div class="history-content" @click="loadFromHistory(item)">
-                <div class="history-prompt">
-                  <el-icon v-if="item.isPinned" class="pin-icon"><StarFilled /></el-icon>
-                  {{ item.prompt }}
+              <el-tooltip :content="item.prompt" placement="left" :show-after="300">
+                <div class="history-content" @click="loadFromHistory(item)">
+                  <div class="history-prompt">
+                    <el-icon v-if="item.isPinned" class="pin-icon"><StarFilled /></el-icon>
+                    {{ item.prompt }}
+                  </div>
+                  <div class="history-time">{{ item.time }}</div>
                 </div>
-                <div class="history-time">{{ item.time }}</div>
-              </div>
+              </el-tooltip>
               <div v-if="!selectMode" class="history-actions">
                 <el-button
                   :type="item.isPinned ? 'warning' : 'info'"

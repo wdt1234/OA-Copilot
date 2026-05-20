@@ -312,16 +312,18 @@ onMounted(() => {
                 @click.stop
                 class="history-checkbox"
               />
-              <div class="history-content" @click="loadFromHistory(item)">
-                <div class="history-meta">
-                  <el-tag size="small" type="info">{{ typeLabel(item.type) }}</el-tag>
-                  <span class="history-time">{{ item.time }}</span>
+              <el-tooltip :content="item.desc" placement="left" :show-after="300">
+                <div class="history-content" @click="loadFromHistory(item)">
+                  <div class="history-meta">
+                    <el-tag size="small" type="info">{{ typeLabel(item.type) }}</el-tag>
+                    <span class="history-time">{{ item.time }}</span>
+                  </div>
+                  <div class="history-desc">
+                    <el-icon v-if="item.isPinned" class="pin-icon"><StarFilled /></el-icon>
+                    {{ item.desc }}
+                  </div>
                 </div>
-                <div class="history-desc">
-                  <el-icon v-if="item.isPinned" class="pin-icon"><StarFilled /></el-icon>
-                  {{ item.desc }}
-                </div>
-              </div>
+              </el-tooltip>
               <div v-if="!selectMode" class="history-actions">
                 <el-button
                   :type="item.isPinned ? 'warning' : 'info'"
