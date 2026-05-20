@@ -2,6 +2,49 @@
 
 # 2026-05-20
 
+## SQL Copilot 优化 + Bug 修复
+
+### Oracle 11g 别名截取修复
+
+- KnowledgeService.shortenAlias() 改为直接截取前 10 个汉字
+- 不再做智能前缀去除，避免误截业务关键词
+- 验证："最新版控制计划轴力标准长度要求" → "最新版控制计划轴"（10字）
+
+### 日期过滤逻辑修复
+
+- 用户未提及时间时，不再添加 START_DATE 过滤条件
+- 原规则：`无时间指定 → 默认使用系统当天日期`（过于激进）
+- 新规则：`用户未提及时间 → 不加时间过滤条件`
+- 更新位置：prompts/sql/form_query.md 第186行
+
+### 历史记录 UI 优化
+
+- 置顶/删除按钮改为仅鼠标悬停时显示（absolute 定位）
+- 历史记录内容区占满宽度，悬停时显示完整描述（el-tooltip）
+- 三个页面（SqlCopilot/DeeCopilot/FieldMapper）统一优化
+
+### SQL Copilot 快捷模板改为可编辑
+
+- 移除「从历史记录存为模板」功能（UI 拥挤）
+- 快捷模板支持：新增、编辑、删除、设为默认、恢复默认
+- 模板存储在 localStorage（key: sql_copilot_quick_templates）
+- 仅 SQL Copilot 页面，DEE 和字段映射暂不添加
+
+### 启动脚本修复
+
+- start.bat：PowerShell 最小化窗口 + 子进程静默启动 + 执行完自动关闭
+- stop.bat：0.5s 自动关闭（ping -n 1 -w 500）
+
+### 涉及文件
+
+- backend: KnowledgeService.java（shortenAlias 修复）
+- backend: knowledge/prompts/sql/form_query.md（日期规则修复）
+- backend: SqlCopilotController.java, DeeController.java, FieldMappingController.java（batch delete 路由修复）
+- frontend: SqlCopilot.vue, DeeCopilot.vue, FieldMapper.vue（UI 优化）
+- start.bat, stop.bat
+
+---
+
 ## 历史记录批量删除 + 快捷模板
 
 ### 历史记录批量删除
