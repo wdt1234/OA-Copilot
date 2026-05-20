@@ -189,28 +189,13 @@ public class KnowledgeService {
 
     /**
      * 缩短别名到10个汉字以内（Oracle 11g限制）
-     * 策略：去掉"最新版/最新/新版"等前缀，保留核心语义
+     * 直接截取前10字
      */
     private String shortenAlias(String displayName) {
         if (displayName == null || displayName.length() <= 10) {
             return displayName;
         }
-
-        // 去掉常见前缀
-        String result = displayName;
-        String[] prefixes = {"最新版", "最新", "新版", "当前"};
-        for (String prefix : prefixes) {
-            if (result.startsWith(prefix) && result.length() > 10) {
-                result = result.substring(prefix.length());
-            }
-        }
-
-        // 如果还是超过10字，截取前10字
-        if (result.length() > 10) {
-            result = result.substring(0, 10);
-        }
-
-        return result;
+        return displayName.substring(0, 10);
     }
 
     /**
