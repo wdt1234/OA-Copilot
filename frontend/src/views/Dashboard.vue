@@ -5,10 +5,10 @@ import * as echarts from 'echarts'
 // ── Mock 数据 ──
 
 const stats = ref([
-  { title: 'SQL 生成次数', value: 128, icon: 'Document', color: '#409eff' },
-  { title: 'DEE 生成次数', value: 56, icon: 'Connection', color: '#67c23a' },
-  { title: '字段映射次数', value: 89, icon: 'Switch', color: '#e6a23c' },
-  { title: '节省开发时间', value: '42h', icon: 'Timer', color: '#f56c6c' }
+  { title: 'SQL 生成次数', value: 128, icon: 'Document', color: '#1890ff', bg: '#e6f7ff' },
+  { title: 'DEE 生成次数', value: 56, icon: 'Connection', color: '#52c41a', bg: '#f6ffed' },
+  { title: '字段映射次数', value: 89, icon: 'Switch', color: '#faad14', bg: '#fffbe6' },
+  { title: '节省开发时间', value: '42h', icon: 'Timer', color: '#f5222d', bg: '#fff1f0' }
 ])
 
 const recentRecords = ref([
@@ -40,11 +40,15 @@ function initChart() {
 
   const option = {
     tooltip: {
-      trigger: 'axis'
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#f0f0f0',
+      textStyle: { color: '#262626' }
     },
     legend: {
       data: ['SQL 生成', 'DEE 生成', '字段映射'],
-      bottom: 0
+      bottom: 0,
+      textStyle: { color: '#8c8c8c' }
     },
     grid: {
       left: '3%',
@@ -56,11 +60,17 @@ function initChart() {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: ['05-07', '05-08', '05-09', '05-10', '05-11', '05-12', '05-13']
+      data: ['05-07', '05-08', '05-09', '05-10', '05-11', '05-12', '05-13'],
+      axisLine: { lineStyle: { color: '#e8e8e8' } },
+      axisLabel: { color: '#8c8c8c' }
     },
     yAxis: {
       type: 'value',
-      minInterval: 1
+      minInterval: 1,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { lineStyle: { color: '#f5f5f5' } },
+      axisLabel: { color: '#8c8c8c' }
     },
     series: [
       {
@@ -68,21 +78,42 @@ function initChart() {
         type: 'line',
         smooth: true,
         data: [12, 18, 15, 22, 19, 28, 24],
-        itemStyle: { color: '#409eff' }
+        lineStyle: { width: 2 },
+        itemStyle: { color: '#1890ff' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(24, 144, 255, 0.15)' },
+            { offset: 1, color: 'rgba(24, 144, 255, 0.02)' }
+          ])
+        }
       },
       {
         name: 'DEE 生成',
         type: 'line',
         smooth: true,
         data: [5, 8, 6, 10, 7, 12, 8],
-        itemStyle: { color: '#67c23a' }
+        lineStyle: { width: 2 },
+        itemStyle: { color: '#52c41a' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(82, 196, 26, 0.15)' },
+            { offset: 1, color: 'rgba(82, 196, 26, 0.02)' }
+          ])
+        }
       },
       {
         name: '字段映射',
         type: 'line',
         smooth: true,
         data: [8, 12, 10, 15, 11, 18, 15],
-        itemStyle: { color: '#e6a23c' }
+        lineStyle: { width: 2 },
+        itemStyle: { color: '#faad14' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(250, 173, 20, 0.15)' },
+            { offset: 1, color: 'rgba(250, 173, 20, 0.02)' }
+          ])
+        }
       }
     ]
   }
@@ -116,7 +147,7 @@ function statusTag(status) {
 }
 
 function statusDot(status) {
-  return status === 'normal' ? '#67c23a' : '#e6a23c'
+  return status === 'normal' ? '#52c41a' : '#faad14'
 }
 </script>
 
@@ -131,9 +162,11 @@ function statusDot(status) {
               <div class="stat-label">{{ item.title }}</div>
               <div class="stat-value">{{ item.value }}</div>
             </div>
-            <el-icon :size="40" :color="item.color" class="stat-icon">
-              <component :is="item.icon" />
-            </el-icon>
+            <div class="stat-icon-wrapper" :style="{ background: item.bg }">
+              <el-icon :size="24" :color="item.color">
+                <component :is="item.icon" />
+              </el-icon>
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -183,13 +216,13 @@ function statusDot(status) {
         <el-table-column prop="time" label="时间" width="170" />
         <el-table-column prop="type" label="类型" width="90">
           <template #default="{ row }">
-            <el-tag :type="typeTag(row.type)" size="small">{{ row.type }}</el-tag>
+            <el-tag :type="typeTag(row.type)" size="small" effect="light">{{ row.type }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="desc" label="描述" />
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
-            <el-tag :type="statusTag(row.status)" size="small">{{ row.status }}</el-tag>
+            <el-tag :type="statusTag(row.status)" size="small" effect="light">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
       </el-table>
@@ -210,7 +243,8 @@ function statusDot(status) {
 }
 
 .stat-card {
-  border: 1px solid #e8e8e8;
+  border: none !important;
+  background: #fff;
 }
 
 .stat-body {
@@ -220,19 +254,25 @@ function statusDot(status) {
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 13px;
   color: #8c8c8c;
   margin-bottom: 8px;
 }
 
 .stat-value {
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
   color: #262626;
+  font-variant-numeric: tabular-nums;
 }
 
-.stat-icon {
-  opacity: 0.8;
+.stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 中间行 */
@@ -242,7 +282,7 @@ function statusDot(status) {
 
 .card-title {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   color: #262626;
 }
 
@@ -254,13 +294,21 @@ function statusDot(status) {
 .status-list {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .status-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: background 0.2s;
+}
+
+.status-item:hover {
+  background: #f0f0f0;
 }
 
 .status-left {
@@ -274,6 +322,7 @@ function statusDot(status) {
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(82, 196, 26, 0.2);
 }
 
 .status-name {
@@ -289,15 +338,29 @@ function statusDot(status) {
 
 /* 记录表格 */
 .records-card {
-  border: 1px solid #e8e8e8;
+  border: none !important;
 }
 
 :deep(.el-card__header) {
-  padding: 14px 20px;
+  padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
 }
 
 :deep(.el-card__body) {
   padding: 16px 20px;
+}
+
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th) {
+  background: #fafafa !important;
+  font-weight: 600;
+}
+
+:deep(.el-tag) {
+  border: none !important;
 }
 </style>

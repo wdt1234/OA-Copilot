@@ -30,16 +30,16 @@ function toggleSidebar() {
   <el-container class="admin-layout">
     <el-aside :width="isCollapse ? '64px' : '220px'" class="sidebar">
       <div class="logo" @click="router.push('/dashboard')">
-        <el-icon :size="28"><Monitor /></el-icon>
+        <el-icon :size="24"><Monitor /></el-icon>
         <span v-show="!isCollapse" class="logo-text">OA Copilot</span>
       </div>
 
       <el-menu
         :default-active="activeMenu"
         :collapse="isCollapse"
-        background-color="#001529"
-        text-color="#ffffffb3"
-        active-text-color="#409eff"
+        background-color="transparent"
+        text-color="rgba(255, 255, 255, 0.75)"
+        active-text-color="#ffffff"
         :collapse-transition="false"
         @select="handleMenuSelect"
       >
@@ -65,17 +65,19 @@ function toggleSidebar() {
             <Fold v-if="!isCollapse" />
             <Expand v-else />
           </el-icon>
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item>首页</el-breadcrumb-item>
-            <el-breadcrumb-item>{{ pageTitle }}</el-breadcrumb-item>
-          </el-breadcrumb>
+          <div class="page-title">
+            <h1>{{ pageTitle }}</h1>
+          </div>
         </div>
 
         <div class="header-right">
           <el-dropdown>
             <span class="user-info">
-              <el-avatar :size="32" icon="UserFilled" />
+              <el-avatar :size="32" class="user-avatar">
+                <el-icon><UserFilled /></el-icon>
+              </el-avatar>
               <span class="username">Admin</span>
+              <el-icon class="arrow-icon"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
@@ -101,10 +103,11 @@ function toggleSidebar() {
 }
 
 .sidebar {
-  background-color: #001529;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
   overflow-y: auto;
   overflow-x: hidden;
-  transition: width 0.3s;
+  transition: width 0.3s ease;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
 }
 
 .sidebar::-webkit-scrollbar {
@@ -112,20 +115,22 @@ function toggleSidebar() {
 }
 
 .logo {
-  height: 60px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   color: #fff;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  border-bottom: 1px solid #ffffff1a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .logo-text {
   white-space: nowrap;
+  letter-spacing: 0.5px;
 }
 
 .header {
@@ -133,9 +138,10 @@ function toggleSidebar() {
   align-items: center;
   justify-content: space-between;
   background: #fff;
-  border-bottom: 1px solid #e8e8e8;
-  padding: 0 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0 24px;
+  height: 64px !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .header-left {
@@ -146,11 +152,22 @@ function toggleSidebar() {
 
 .collapse-btn {
   cursor: pointer;
-  color: #666;
+  color: #8c8c8c;
+  transition: color 0.2s;
+  padding: 4px;
+  border-radius: 4px;
 }
 
 .collapse-btn:hover {
-  color: #409eff;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.06);
+}
+
+.page-title h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0;
 }
 
 .header-right {
@@ -163,20 +180,54 @@ function toggleSidebar() {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  color: #333;
+  color: #595959;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.user-info:hover {
+  background: #f5f5f5;
+}
+
+.user-avatar {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
 }
 
 .username {
   font-size: 14px;
+  font-weight: 500;
+}
+
+.arrow-icon {
+  font-size: 12px;
+  color: #bfbfbf;
 }
 
 .main-content {
-  background-color: #f0f2f5;
+  background-color: #f5f7fa;
   overflow-y: auto;
   padding: 20px;
 }
 
 :deep(.el-menu) {
   border-right: none;
+  padding: 8px;
+}
+
+:deep(.el-menu-item) {
+  border-radius: 6px;
+  margin-bottom: 4px;
+  height: 44px;
+  line-height: 44px;
+}
+
+:deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+:deep(.el-menu-item.is-active) {
+  background: linear-gradient(90deg, #1890ff 0%, #40a9ff 100%) !important;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
 }
 </style>
