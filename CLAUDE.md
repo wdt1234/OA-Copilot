@@ -304,7 +304,7 @@ AI 后续生成：
   - 选人：存 ORG_MEMBER.id
   - 选部门：存 ORG_UNIT.id
   - 下拉/单选：存 CTP_ENUM_ITEM.id
-  - 上传附件：极少用，走 CTP_ATTACHMENT（sub_reference=field）
+  - 上传附件：字段存 CTP_ATTACHMENT.ID → JOIN CTP_ATTACHMENT（SUB_REFERENCE = fieldxxxx）取 FILENAME
 
 ## 1. 表单表规则
 - 主表：FORMMAIN_XXXX
@@ -337,7 +337,8 @@ AI 后续生成：
 
 ## 4. 附件表
 - CTP_ATTACHMENT：附件信息
-  - sub_reference = field
+  - JOIN：`CTP_ATTACHMENT.SUB_REFERENCE = formmain_xxxx.fieldxxxx`（SUB_REFERENCE 存附件 ID，与表单字段值相同）
+  - 取 FILENAME 显示文件名
 
 ## 5. 标准关联链路
 - FORMMAIN_XXXX.id ↔ COL_SUMMARY.form_recordid
