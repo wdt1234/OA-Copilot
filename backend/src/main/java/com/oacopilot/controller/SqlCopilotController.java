@@ -65,12 +65,22 @@ public class SqlCopilotController {
         if (ids.isEmpty()) {
             return Map.of("deleted", 0);
         }
+        // 先查出要删除的记录的 prompt，同步删除缓存
+        List<SqlHistory> records = sqlHistoryMapper.findByIds(ids);
+        for (SqlHistory record : records) {
+            sqlCacheMapper.deleteByPrompt(record.getPrompt());
+        }
         int deleted = sqlHistoryMapper.deleteByIds(ids);
         return Map.of("deleted", deleted);
     }
 
     @DeleteMapping("/history/{id}")
     public Map<String, Object> deleteHistory(@PathVariable Long id) {
+        // 先查出记录的 prompt，同步删除缓存
+        SqlHistory record = sqlHistoryMapper.findById(id);
+        if (record != null) {
+            sqlCacheMapper.deleteByPrompt(record.getPrompt());
+        }
         sqlHistoryMapper.deleteById(id);
         return Map.of("message", "已删除");
     }

@@ -25,4 +25,9 @@
         DELETE FROM sql_cache
     </delete>
 
+    <delete id="deleteByPrompt">
+        DELETE FROM sql_cache
+        WHERE prompt = #{prompt}
+    </delete>
+
 </mapper>

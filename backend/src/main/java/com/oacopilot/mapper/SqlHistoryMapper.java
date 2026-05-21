@@ -18,4 +18,8 @@ public interface SqlHistoryMapper {
     int deleteById(@Param("id") Long id);
 
     int deleteByIds(@Param("ids") List<Long> ids);
+
+    SqlHistory findById(@Param("id") Long id);
+
+    List<SqlHistory> findByIds(@Param("ids") List<Long> ids);
 }

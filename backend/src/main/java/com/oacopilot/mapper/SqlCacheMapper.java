@@ -14,4 +14,6 @@ public interface SqlCacheMapper {
     int deleteExpired(@Param("days") int days);
 
     int deleteAll();
+
+    int deleteByPrompt(@Param("prompt") String prompt);
 }
