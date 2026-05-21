@@ -211,19 +211,22 @@ AI 后续生成：
 
 ---
 
-## 附件字段只查 ID + filename
+## 附件字段 JOIN 规范
 
 原因：
 
 - 附件表 CTP_ATTACHMENT 存储附件元数据
-- 业务场景只需要查询附件 ID 和文件名
-- 不需要查询附件内容（二进制）
+- 表单附件字段（如 FIELD0068）存储的是附件 ID（CTP_ATTACHMENT.ID）
+- CTP_ATTACHMENT.SUB_REFERENCE 存储的也是附件 ID（与表单字段值相同）
+- 之前误认为 SUB_REFERENCE 存字段名，MODULE_ID 存表单记录 ID（错误）
 
 决定：
 
-- 附件 JOIN 基础版：LEFT JOIN CTP_ATTACHMENT ON sub_reference = field
-- 只查询 ID 和 FILENAME
-- 不查询附件内容
+- **正确 JOIN**：`CTP_ATTACHMENT.SUB_REFERENCE = formmain_xxxx.fieldxxxx`
+- **禁止错误 JOIN**：不允许 `MODULE_ID = m.ID AND SUB_REFERENCE = 'FIELDXXXX'`
+- 表单字段本身存附件 ID，SELECT 时直接取字段值作为附件 ID
+- 额外 JOIN CTP_ATTACHMENT 取 FILENAME（文件名）
+- 不查询附件内容（二进制）
 
 ---
 

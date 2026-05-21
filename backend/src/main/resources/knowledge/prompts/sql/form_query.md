@@ -19,7 +19,16 @@
   - 选人：存 ORG_MEMBER.id → 需 JOIN ORG_MEMBER 取 NAME
   - 选部门：存 ORG_UNIT.id → 需 JOIN ORG_UNIT 取 NAME
   - 下拉/单选：存 CTP_ENUM_ITEM.id → 需 JOIN CTP_ENUM_ITEM 取 SHOWVALUE
-  - 上传附件：极少用，走 CTP_ATTACHMENT（sub_reference=field）
+  - 上传附件：字段存 CTP_ATTACHMENT.ID → 需 JOIN CTP_ATTACHMENT 取 FILENAME
+    - **JOIN 方式**：`CTP_ATTACHMENT.SUB_REFERENCE = formmain_xxxx.fieldxxxx`（SUB_REFERENCE 存的是附件 ID，与表单字段值相同）
+    - **禁止错误 JOIN**：不允许 `MODULE_ID = m.ID AND SUB_REFERENCE = 'FIELDXXXX'`
+    - **SELECT**：表单字段本身存附件 ID，额外 JOIN 取 FILENAME
+    - 示例：
+      ```sql
+      SELECT m.FIELD0068 AS 附件ID, a.FILENAME AS 文件名
+      FROM FORMMAIN_XXXX m
+      LEFT JOIN CTP_ATTACHMENT a ON a.SUB_REFERENCE = m.FIELD0068
+      ```
 - **选多人**：字段存多个 ID 逗号分隔（如 "123,456,789"），需拆分后 JOIN
 
 ### CLOB 字段限制（必须遵守）
