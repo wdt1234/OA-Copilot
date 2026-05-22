@@ -330,10 +330,10 @@ AI 后续生成：
    - DEPARTMENT_NAME / POST_NAME / ACCOUNT_NAME 冗余存储
 
 ## 3. 枚举 / 组织表（ID 转名称）
-- CTP_ENUM_ITEM：下拉框 -> showvalue，id = FORMMAIN_XXXX.fieldXXXX
-- ORG_MEMBER：选人 -> name，id = FORMMAIN_XXXX.fieldXXXX
-- ORG_UNIT：选部门 -> name，id = FORMMAIN_XXXX.fieldXXXX
-- ORG_POST：选岗位 -> name，id = FORMMAIN_XXXX.fieldXXXX
+- CTP_ENUM_ITEM：下拉框 -> showvalue，`CTP_ENUM_ITEM.ID = fieldxxxx`（直接比较）
+- ORG_MEMBER：选人 -> name，`ORG_MEMBER.ID = fieldxxxx`（直接比较，不加 TO_CHAR）
+- ORG_UNIT：选部门 -> name，`ORG_UNIT.ID = fieldxxxx`（直接比较）
+- ORG_POST：选岗位 -> name，`ORG_POST.ID = fieldxxxx`（直接比较）
 
 ## 4. 附件表
 - CTP_ATTACHMENT：附件信息

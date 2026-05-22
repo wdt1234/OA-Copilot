@@ -3,7 +3,7 @@
   "tableType": "system",
   "description": "OA 下拉枚举项表（下拉字段关联），负责将枚举 ID 转换为中文显示值",
   "primaryField": "ID",
-  "joinRule": "TO_CHAR(CTP_ENUM_ITEM.ID) = {formTable}.{selectField}",
+  "joinRule": "CTP_ENUM_ITEM.ID = {formTable}.{selectField}",
   "defaultFilter": "STATE = 1",
   "defaultFilterDescription": "默认只查启用的枚举项（STATE: 0=停用, 1=启用, 3=删除）",
   "fields": [
@@ -46,7 +46,7 @@
   ],
   "criticalRules": [
     "OA 表单下拉字段存储的是 CTP_ENUM_ITEM.ID，不是 ENUMVALUE 或 CODE",
-    "JOIN 规则：TO_CHAR(CTP_ENUM_ITEM.ID) = formmain_xxxx.fieldxxxx",
+    "JOIN 规则：CTP_ENUM_ITEM.ID = formmain_xxxx.fieldxxxx（直接比较，不加 TO_CHAR）",
     "禁止 fieldxxxx = ENUMVALUE 或 fieldxxxx = CODE",
     "默认显示 SHOWVALUE",
     "当前阶段不按 REF_ENUMID 过滤，直接按 ID JOIN"

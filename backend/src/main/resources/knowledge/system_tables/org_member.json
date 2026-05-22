@@ -3,7 +3,7 @@
   "tableType": "system",
   "description": "OA 人员表（选人字段关联）",
   "primaryField": "ID",
-  "joinRule": "TO_CHAR(ORG_MEMBER.ID) = {formTable}.{selectField}",
+  "joinRule": "ORG_MEMBER.ID = {formTable}.{selectField}",
   "supportsMulti": true,
   "multiRule": {
     "description": "多选人字段存多个 ID 逗号分隔，如 \"123,456,789\"",

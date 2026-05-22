@@ -23,7 +23,7 @@ member_agg AS (
         s.main_id,
         LISTAGG(m.NAME, '、') WITHIN GROUP (ORDER BY m.NAME) AS display_name
     FROM split_member s
-    JOIN ORG_MEMBER m ON TO_CHAR(m.id) = s.member_id
+    JOIN ORG_MEMBER m ON m.id = s.member_id
     GROUP BY s.main_id
 )
 
@@ -44,7 +44,7 @@ member_agg AS (
 --         s.main_id,
 --         LISTAGG(u.NAME, '、') WITHIN GROUP (ORDER BY u.NAME) AS display_name
 --     FROM split_dept s
---     JOIN ORG_UNIT u ON TO_CHAR(u.id) = s.dept_id
+--     JOIN ORG_UNIT u ON u.id = s.dept_id
 --     GROUP BY s.main_id
 -- )
 

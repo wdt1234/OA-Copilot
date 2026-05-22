@@ -9,9 +9,9 @@ SELECT
     COUNT(*)                            AS 申请数量
 FROM FORMMAIN_0433 f
 
--- 选人：申请人（TO_CHAR 兼容）
+-- 选人：申请人
 LEFT JOIN ORG_MEMBER m
-    ON TO_CHAR(m.ID) = f.FIELD0030
+    ON m.ID = f.FIELD0030
 
 -- 流程状态：只统计已发起的
 LEFT JOIN COL_SUMMARY h

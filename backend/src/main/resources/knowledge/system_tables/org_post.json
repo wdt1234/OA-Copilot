@@ -3,7 +3,7 @@
   "tableType": "system",
   "description": "OA 岗位表（选岗位字段关联）",
   "primaryField": "ID",
-  "joinRule": "TO_CHAR(ORG_POST.ID) = {formTable}.{selectField}",
+  "joinRule": "ORG_POST.ID = {formTable}.{selectField}",
   "defaultFilter": "IS_ENABLE = 1 AND IS_DELETED = 0",
   "defaultFilterDescription": "默认只查启用、未删除的岗位",
   "fields": [

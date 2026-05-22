@@ -296,7 +296,7 @@ name_agg AS (
         s.main_id,
         LISTAGG(m.name, '、') WITHIN GROUP (ORDER BY m.name) AS display_name
     FROM split_ids s
-    JOIN ORG_MEMBER m ON TO_CHAR(m.id) = s.member_id
+    JOIN ORG_MEMBER m ON m.id = s.member_id
     GROUP BY s.main_id
 )
 SELECT n.display_name AS 选多人姓名
@@ -306,19 +306,19 @@ LEFT JOIN name_agg n ON n.main_id = a.id
 
 ---
 
-## VARCHAR 字段存 ID 需要 TO_CHAR 兼容
+## 选人/选部门/下拉字段直接 JOIN（不加 TO_CHAR）
 
 原因：
 
-- 部分表单的选人/选部门/下拉字段类型是 VARCHAR 而非 NUMBER
-- ORG_MEMBER.id / ORG_UNIT.id / CTP_ENUM_ITEM.id 是 NUMBER
-- 直接比较 VARCHAR 和 NUMBER 可能导致类型不匹配
+- OA 表单的选人/选部门/下拉字段存储的是雪花 ID（带负号的字符串，如 -820787101123853929）
+- ID 本身就是字符串类型，不是纯数字
+- TO_CHAR 会导致索引失效，查询变慢
 
 决定：
 
-- 当字段类型为 VARCHAR 时，JOIN 条件使用 TO_CHAR(id) = field
-- 当字段类型为 NUMBER 时，直接比较 id = field
-- AI 生成 SQL 时应根据字段类型自动选择
+- **默认直接 JOIN**：`ORG_MEMBER.ID = fieldxxxx`（不加 TO_CHAR）
+- 仅当报类型不匹配错误时才加 TO_CHAR
+- AI 生成 SQL 时默认不使用 TO_CHAR
 
 ---
 
@@ -326,19 +326,17 @@ LEFT JOIN name_agg n ON n.main_id = a.id
 
 原因：
 
-- OA 表单选人字段存储 ORG_MEMBER.ID，字段类型可能是 VARCHAR
-- ID 为超长数字（如 8743904071964707111），且可能为负数（如 -820787101123853929）
-- 直接用数字比较会导致类型不匹配或精度丢失
-- 查询人员时需要默认过滤离职/停用/已删除账号
+- OA 表单选人字段存储 ORG_MEMBER.ID
+- TO_CHAR 会导致索引失效，查询变慢
+- 实际场景中字段类型兼容，直接比较即可
 
 决定：
 
-- **统一使用 TO_CHAR 兼容**：`TO_CHAR(ORG_MEMBER.ID) = formmain_xxxx.fieldxxxx`
-- 禁止直接 `ORG_MEMBER.ID = fieldxxxx`
+- **默认直接 JOIN**：`ORG_MEMBER.ID = formmain_xxxx.fieldxxxx`（不加 TO_CHAR）
+- **仅当报类型不匹配错误时**才加 TO_CHAR
 - 查询 ORG_MEMBER 时默认加：`STATE = 1 AND IS_ENABLE = 1 AND IS_DELETED = 0`
 - ORG_MEMBER 关联部门：`ORG_DEPARTMENT_ID = ORG_UNIT.ID`
 - ORG_MEMBER 关联岗位：`ORG_POST_ID = ORG_POST.ID`
-- 系统表数据字典存放在 `knowledge/system_tables/` 目录
 
 ---
 
@@ -353,7 +351,7 @@ LEFT JOIN name_agg n ON n.main_id = a.id
 
 决定：
 
-- **统一使用 TO_CHAR 兼容**：`TO_CHAR(ORG_UNIT.ID) = formmain_xxxx.fieldxxxx`
+- **默认直接 JOIN**：`ORG_UNIT.ID = formmain_xxxx.fieldxxxx`（不加 TO_CHAR）
 - 禁止直接 `ORG_UNIT.ID = fieldxxxx`
 - 查询 ORG_UNIT 时默认加：`IS_ENABLE = 1 AND IS_DELETED = 0`
 - ORG_UNIT 树形层级通过 PATH 字段实现（如一级 000000010007，二级 0000000100070001）
@@ -371,7 +369,7 @@ LEFT JOIN name_agg n ON n.main_id = a.id
 
 决定：
 
-- **统一使用 TO_CHAR 兼容**：`TO_CHAR(ORG_POST.ID) = formmain_xxxx.fieldxxxx`
+- **默认直接 JOIN**：`ORG_POST.ID = formmain_xxxx.fieldxxxx`（不加 TO_CHAR）
 - 禁止直接 `ORG_POST.ID = fieldxxxx`
 - 查询 ORG_POST 时默认加：`IS_ENABLE = 1 AND IS_DELETED = 0`
 - 遇到"选岗位/岗位/职位/主岗"关键词时，优先联想到 ORG_POST
@@ -389,7 +387,7 @@ LEFT JOIN name_agg n ON n.main_id = a.id
 
 决定：
 
-- **统一使用 TO_CHAR 兼容**：`TO_CHAR(CTP_ENUM_ITEM.ID) = formmain_xxxx.fieldxxxx`
+- **默认直接 JOIN**：`CTP_ENUM_ITEM.ID = formmain_xxxx.fieldxxxx`（不加 TO_CHAR）
 - 禁止 `fieldxxxx = ENUMVALUE` 或 `fieldxxxx = CODE`
 - 默认显示 SHOWVALUE
 - 查询 CTP_ENUM_ITEM 时默认加：`STATE = 1`
@@ -431,7 +429,7 @@ LEFT JOIN name_agg n ON n.main_id = a.id
 - 查询"流程状态""流程是否结束" → 必须用 COL_SUMMARY.STATE
 - 标准 JOIN：`FORMMAIN.ID = COL_SUMMARY.FORM_RECORDID`
 - 流程状态码：0=未结束, 1=终止, 2=待发, 3=已结束
-- 查发起人：`COL_SUMMARY.START_MEMBER_ID = TO_CHAR(ORG_MEMBER.ID)`
+- 查发起人：`COL_SUMMARY.START_MEMBER_ID = ORG_MEMBER.ID`
 
 ---
 

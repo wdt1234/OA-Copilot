@@ -9,9 +9,9 @@ SELECT
     COUNT(*)                            AS 申请数量
 FROM FORMMAIN_0433 f
 
--- 选部门：申请部门（TO_CHAR 兼容）
+-- 选部门：申请部门
 LEFT JOIN ORG_UNIT u
-    ON TO_CHAR(u.ID) = f.FIELD0004
+    ON u.ID = f.FIELD0004
 
 -- 流程状态：只统计已发起的
 LEFT JOIN COL_SUMMARY h
