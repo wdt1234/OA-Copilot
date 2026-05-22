@@ -256,6 +256,13 @@ ORDER BY m.START_DATE DESC
 - 每个字段都用 `字段名 AS 中文别名` 格式
 - 特殊字段（选人/选部门/下拉/单选）额外 JOIN 取显示值
 
+### JOIN 顺序规则（必须遵守）
+
+- **Oracle FROM/JOIN 按顺序解析**，引用的表必须先定义
+- 如果 ORG_MEMBER 的 JOIN 条件引用了明细表字段（如 `s1.FIELD0044`），则明细表 JOIN 必须写在前面
+- 正确顺序：`FROM FORMMAIN m LEFT JOIN FORMSON s1 ON ... LEFT JOIN ORG_MEMBER om ON om.ID = s1.FIELD0044`
+- 错误顺序：`FROM FORMMAIN m LEFT JOIN ORG_MEMBER om ON om.ID = s1.FIELD0044 ... LEFT JOIN FORMSON s1 ON ...`（s1 未定义就引用）
+
 ### 明细表关联查询规则（必须遵守）
 
 - 用户说"包含明细表""含明细表"时，**每个明细表分别生成独立的 SQL**
