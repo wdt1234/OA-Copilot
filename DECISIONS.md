@@ -236,15 +236,14 @@ AI 后续生成：
 
 - OA 表单中"选人"字段支持多选
 - 多选时，字段存的是多个 ID 用逗号分隔，如 "123,456,789"
-- 字段类型可能是 VARCHAR 或 NUMBER
-- 不能直接 JOIN ORG_MEMBER，需要先拆分成多行
+- 在 SELECT 中直接用行级 LISTAGG 子查询扫描 ORG_MEMBER 会导致 SQL 卡死
+- REGEXP_SUBSTR + CONNECT BY 在 Oracle 中也有性能问题
 
 决定：
 
-- 使用 REGEXP_SUBSTR + CONNECT BY 拆分逗号分隔的 ID
-- JOIN ORG_MEMBER 取 name
-- 使用 LISTAGG 聚合多个人名（用"、"分隔）
-- 字段类型为 VARCHAR 时，需要 TO_CHAR 兼容
+- **每个多人字段独立 CTE 预关联**：`FROM FORMMAIN m JOIN ORG_MEMBER om ON LIKE '%,' || om.ID || ',%'`
+- **主查询只做 LISTAGG 回填**：`(SELECT LISTAGG(...) FROM member_map_xxxx WHERE form_id = m.ID)`
+- 禁止在 SELECT 中直接扫描 ORG_MEMBER
 - **选多人与选人同等对待**：isSpecial=true，refTable=ORG_MEMBER
 
 ---
@@ -278,30 +277,30 @@ AI 后续生成：
 - inputType 保留原始值（如"表单自定义控件"），不做映射
 - 不标记为特殊字段（isSpecial=false）
 
-SQL 模板：
+SQL 模板（CTE 预关联 + LISTAGG 回填）：
 
 ```sql
-WITH split_ids AS (
-    SELECT
-        a.id AS main_id,
-        REGEXP_SUBSTR(a.fieldXXXX, '[^,]+', 1, LEVEL) AS member_id
-    FROM FORMMAIN_XXXX a
-    WHERE a.fieldXXXX IS NOT NULL
-    CONNECT BY REGEXP_SUBSTR(a.fieldXXXX, '[^,]+', 1, LEVEL) IS NOT NULL
-        AND PRIOR a.id = a.id
-        AND PRIOR SYS_GUID() IS NOT NULL
+-- 每个多人字段一个 CTE
+WITH member_map_0082 AS (
+    SELECT m.id AS form_id, om.NAME
+    FROM FORMMAIN_XXXX m
+    JOIN ORG_MEMBER om ON ',' || m.FIELD0082 || ',' LIKE '%,' || om.ID || ',%'
+    WHERE om.STATE = 1 AND om.IS_ENABLE = 1 AND om.IS_DELETED = 0
 ),
-name_agg AS (
-    SELECT
-        s.main_id,
-        LISTAGG(m.name, '、') WITHIN GROUP (ORDER BY m.name) AS display_name
-    FROM split_ids s
-    JOIN ORG_MEMBER m ON m.id = s.member_id
-    GROUP BY s.main_id
+member_map_0083 AS (
+    SELECT m.id AS form_id, om.NAME
+    FROM FORMMAIN_XXXX m
+    JOIN ORG_MEMBER om ON ',' || m.FIELD0083 || ',' LIKE '%,' || om.ID || ',%'
+    WHERE om.STATE = 1 AND om.IS_ENABLE = 1 AND om.IS_DELETED = 0
 )
-SELECT n.display_name AS 选多人姓名
-FROM FORMMAIN_XXXX a
-LEFT JOIN name_agg n ON n.main_id = a.id
+-- 主查询只做聚合回填
+SELECT
+    m.ID,
+    (SELECT LISTAGG(NAME, ',') WITHIN GROUP (ORDER BY NAME)
+     FROM member_map_0082 mm WHERE mm.form_id = m.ID) AS 多选人1,
+    (SELECT LISTAGG(NAME, ',') WITHIN GROUP (ORDER BY NAME)
+     FROM member_map_0083 mm WHERE mm.form_id = m.ID) AS 多选人2
+FROM FORMMAIN_XXXX m
 ```
 
 ---

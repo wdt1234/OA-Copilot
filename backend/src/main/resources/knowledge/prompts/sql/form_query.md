@@ -29,7 +29,7 @@
       FROM FORMMAIN_XXXX m
       LEFT JOIN CTP_ATTACHMENT a ON a.SUB_REFERENCE = m.FIELD0068
       ```
-- **选多人**：字段存多个 ID 逗号分隔（如 "123,456,789"），需拆分后 JOIN
+- **选多人**：字段存多个 ID 逗号分隔（如 "123,456,789"），**必须使用 CTE 预关联 + LISTAGG 回填**（见下方标准模板）
 
 ### CLOB 字段限制（必须遵守）
 
@@ -183,8 +183,46 @@ ORDER BY t.SUBJECT, t.RECEIVE_TIME DESC
 5. 涉及流程状态 → 自动 JOIN COL_SUMMARY
 6. 涉及审批记录 → 自动 JOIN COL_SUMMARY + CTP_COMMENT_ALL + CTP_AFFAIR
 7. 文本域/流程处理意见 → 直接取值，不做任何特殊处理
-8. **选多人字段**（多选 ID 逗号分隔）→ 使用 REGEXP_SUBSTR + CONNECT BY 拆分，JOIN ORG_MEMBER，LISTAGG 聚合
+8. **选多人字段**（多选 ID 逗号分隔）→ 每个字段独立 CTE 预关联，主查询 LISTAGG 回填（见下方标准模板）
 9. 选人/选部门/下拉字段 → 默认直接 JOIN（id = field），不加 TO_CHAR
+
+### 选多人字段标准模板（必须遵守）
+
+**禁止在 SELECT 中使用行级 LISTAGG 子查询直接扫描 ORG_MEMBER**，会导致 SQL 卡死。
+
+**正确模式：每个多人字段独立 CTE 预关联 + 主查询 LISTAGG 回填**
+
+```sql
+-- Step 1: 每个多人字段一个 CTE，预关联 ORG_MEMBER
+WITH member_map_0082 AS (
+    SELECT m.id AS form_id, om.NAME
+    FROM FORMMAIN_XXXX m
+    JOIN ORG_MEMBER om ON ',' || m.FIELD0082 || ',' LIKE '%,' || om.ID || ',%'
+    WHERE om.STATE = 1 AND om.IS_ENABLE = 1 AND om.IS_DELETED = 0
+),
+member_map_0083 AS (
+    SELECT m.id AS form_id, om.NAME
+    FROM FORMMAIN_XXXX m
+    JOIN ORG_MEMBER om ON ',' || m.FIELD0083 || ',' LIKE '%,' || om.ID || ',%'
+    WHERE om.STATE = 1 AND om.IS_ENABLE = 1 AND om.IS_DELETED = 0
+)
+
+-- Step 2: 主查询只做聚合回填
+SELECT
+    m.FIELD0025 AS 表单编号,
+    (SELECT LISTAGG(NAME, ',') WITHIN GROUP (ORDER BY NAME)
+     FROM member_map_0082 mm WHERE mm.form_id = m.ID) AS M11负责人,
+    (SELECT LISTAGG(NAME, ',') WITHIN GROUP (ORDER BY NAME)
+     FROM member_map_0083 mm WHERE mm.form_id = m.ID) AS X12负责人
+FROM FORMMAIN_XXXX m
+ORDER BY m.START_DATE DESC
+```
+
+**关键规则：**
+- 每个多人字段独立一个 CTE（如 member_map_0082、member_map_0083）
+- CTE 内用 `LIKE '%,' || om.ID || ',%'` 匹配逗号分隔的 ID
+- 主查询用 `(SELECT LISTAGG(...) FROM member_map_xxxx WHERE form_id = m.ID)` 回填
+- 禁止在 SELECT 中直接写 `FROM ORG_MEMBER om WHERE ',' || m.FIELDxxx || ',' LIKE ...`
 
 ### 日期智能解析规则
 
