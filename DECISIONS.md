@@ -234,16 +234,18 @@ AI 后续生成：
 
 原因：
 
-- OA 表单中"选人"字段支持多选
-- 多选时，字段存的是多个 ID 用逗号分隔，如 "123,456,789"
-- 在 SELECT 中直接用行级 LISTAGG 子查询扫描 ORG_MEMBER 会导致 SQL 卡死
-- REGEXP_SUBSTR + CONNECT BY 在 Oracle 中也有性能问题
+- OA 表单中"选人"字段支持多选，字段存多个 ID 逗号分隔（如 "123,456,789"）
+- 行级 LISTAGG 子查询直接扫描 ORG_MEMBER 会导致 SQL 卡死
+- 每字段独立 CTE + LIKE 仍有 N×M 扫描问题
 
 决定：
 
-- **每个多人字段独立 CTE 预关联**：`FROM FORMMAIN m JOIN ORG_MEMBER om ON LIKE '%,' || om.ID || ',%'`
-- **主查询只做 LISTAGG 回填**：`(SELECT LISTAGG(...) FROM member_map_xxxx WHERE form_id = m.ID)`
-- 禁止在 SELECT 中直接扫描 ORG_MEMBER
+- **三层结构**：REGEXP_SUBSTR 拆分 → 统一 JOIN ORG_MEMBER → LISTAGG 聚合 → CASE WHEN 回填
+- Step 1：所有多人字段用 REGEXP_SUBSTR + CONNECT BY 拆为 (form_id, field_code, member_id)
+- Step 2：统一 JOIN ORG_MEMBER（只扫描一次）
+- Step 3：`LISTAGG(NAME, ',') WITHIN GROUP (ORDER BY NAME) GROUP BY form_id, field_code`
+- Step 4：主查询 `MAX(CASE WHEN field_code='xxx' THEN names END)` 转列回填
+- **禁止**：每字段独立 CTE + LIKE、SELECT 中行级子查询扫描 ORG_MEMBER
 - **选多人与选人同等对待**：isSpecial=true，refTable=ORG_MEMBER
 
 ---

@@ -193,36 +193,48 @@ ORDER BY t.SUBJECT, t.RECEIVE_TIME DESC
 **正确模式：每个多人字段独立 CTE 预关联 + 主查询 LISTAGG 回填**
 
 ```sql
--- Step 1: 每个多人字段一个 CTE，预关联 ORG_MEMBER
-WITH member_map_0082 AS (
-    SELECT m.id AS form_id, om.NAME
-    FROM FORMMAIN_XXXX m
-    JOIN ORG_MEMBER om ON ',' || m.FIELD0082 || ',' LIKE '%,' || om.ID || ',%'
+-- Step 1: REGEXP_SUBSTR 拆分所有多人字段为 (form_id, field_code, member_id)
+WITH all_members AS (
+    SELECT id AS form_id, 'FIELD0082' AS field_code, TRIM(REGEXP_SUBSTR(FIELD0082, '[^,]+', 1, LEVEL)) AS member_id
+    FROM FORMMAIN_XXXX WHERE FIELD0082 IS NOT NULL
+    CONNECT BY id = PRIOR id AND PRIOR SYS_GUID() IS NOT NULL
+      AND LEVEL <= REGEXP_COUNT(FIELD0082, ',') + 1
+    UNION ALL
+    SELECT id, 'FIELD0083', TRIM(REGEXP_SUBSTR(FIELD0083, '[^,]+', 1, LEVEL))
+    FROM FORMMAIN_XXXX WHERE FIELD0083 IS NOT NULL
+    CONNECT BY id = PRIOR id AND PRIOR SYS_GUID() IS NOT NULL
+      AND LEVEL <= REGEXP_COUNT(FIELD0083, ',') + 1
+),
+-- Step 2: 统一 JOIN ORG_MEMBER（只扫描一次）
+member_names AS (
+    SELECT a.form_id, a.field_code, om.NAME
+    FROM all_members a
+    JOIN ORG_MEMBER om ON om.ID = a.member_id
     WHERE om.STATE = 1 AND om.IS_ENABLE = 1 AND om.IS_DELETED = 0
 ),
-member_map_0083 AS (
-    SELECT m.id AS form_id, om.NAME
-    FROM FORMMAIN_XXXX m
-    JOIN ORG_MEMBER om ON ',' || m.FIELD0083 || ',' LIKE '%,' || om.ID || ',%'
-    WHERE om.STATE = 1 AND om.IS_ENABLE = 1 AND om.IS_DELETED = 0
+-- Step 3: 统一聚合
+member_agg AS (
+    SELECT form_id, field_code, LISTAGG(NAME, ',') WITHIN GROUP (ORDER BY NAME) AS names
+    FROM member_names
+    GROUP BY form_id, field_code
 )
-
--- Step 2: 主查询只做聚合回填
+-- Step 4: 主查询回填（CASE WHEN 转列）
 SELECT
     m.FIELD0025 AS 表单编号,
-    (SELECT LISTAGG(NAME, ',') WITHIN GROUP (ORDER BY NAME)
-     FROM member_map_0082 mm WHERE mm.form_id = m.ID) AS M11负责人,
-    (SELECT LISTAGG(NAME, ',') WITHIN GROUP (ORDER BY NAME)
-     FROM member_map_0083 mm WHERE mm.form_id = m.ID) AS X12负责人
+    MAX(CASE WHEN ma.field_code = 'FIELD0082' THEN ma.names END) AS M11负责人,
+    MAX(CASE WHEN ma.field_code = 'FIELD0083' THEN ma.names END) AS X12负责人
 FROM FORMMAIN_XXXX m
+LEFT JOIN member_agg ma ON ma.form_id = m.ID
+GROUP BY m.ID, m.FIELD0025
 ORDER BY m.START_DATE DESC
 ```
 
 **关键规则：**
-- 每个多人字段独立一个 CTE（如 member_map_0082、member_map_0083）
-- CTE 内用 `LIKE '%,' || om.ID || ',%'` 匹配逗号分隔的 ID
-- 主查询用 `(SELECT LISTAGG(...) FROM member_map_xxxx WHERE form_id = m.ID)` 回填
-- 禁止在 SELECT 中直接写 `FROM ORG_MEMBER om WHERE ',' || m.FIELDxxx || ',' LIKE ...`
+- 所有多人字段合并到一个 `all_members` CTE，用 UNION ALL 拼接
+- ORG_MEMBER 只 JOIN 一次（在 `member_names` CTE 中）
+- 用 `LISTAGG + GROUP BY form_id, field_code` 统一聚合
+- 主查询用 `MAX(CASE WHEN field_code='xxx' THEN names END)` 转列回填
+- **禁止**：每字段独立 CTE + LIKE、SELECT 中行级子查询扫描 ORG_MEMBER
 
 ### 日期智能解析规则
 
