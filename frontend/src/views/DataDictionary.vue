@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { StarFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
 
 // ── 状态 ──
@@ -160,166 +161,177 @@ onMounted(() => {
     <el-row :gutter="16">
       <!-- 左侧：输入区 -->
       <el-col :xs="24" :lg="14">
-        <el-card shadow="never">
-          <template #header>
-            <span class="card-title">录入数据字典</span>
-          </template>
-
-          <div class="input-hint">
-            从 OA 表单设计器复制字段信息，粘贴到下方文本框，系统自动解析。
+        <div class="panel animate-fade-in-up">
+          <div class="panel__header">
+            <div class="panel__title">
+              <div class="panel__title-icon">
+                <el-icon :size="18"><Notebook /></el-icon>
+              </div>
+              <div>
+                <h2 class="panel__title-text">录入数据字典</h2>
+                <p class="panel__title-desc">粘贴 OA 表单字段信息，自动解析</p>
+              </div>
+            </div>
           </div>
-
-          <el-input
-            v-model="rawText"
-            type="textarea"
-            :rows="16"
-            placeholder="粘贴 OA 表单字段信息..."
-            class="raw-input"
-          />
-
-          <div class="actions">
-            <el-button
-              type="primary"
-              :loading="parsing"
-              @click="parsePreview"
-            >
-              {{ parsing ? '解析中...' : '解析预览' }}
-            </el-button>
-            <el-button @click="clearForm">清空</el-button>
-          </div>
-        </el-card>
-
-        <!-- 预览区 -->
-        <el-card v-if="showPreview && parsedResult" shadow="never" class="preview-card">
-          <template #header>
-            <div class="preview-header">
-              <span class="card-title">解析结果预览</span>
+          <div class="panel__body">
+            <el-input
+              v-model="rawText"
+              type="textarea"
+              :rows="16"
+              placeholder="粘贴 OA 表单字段信息..."
+              class="raw-input"
+            />
+            <div class="actions">
               <el-button
                 type="primary"
-                :loading="saving"
-                @click="saveDictionary"
+                class="btn-primary-action"
+                :loading="parsing"
+                @click="parsePreview"
               >
-                {{ saving ? '保存中...' : '确认保存' }}
+                {{ parsing ? '解析中...' : '解析预览' }}
               </el-button>
+              <el-button @click="clearForm">清空</el-button>
             </div>
-          </template>
-
-          <el-descriptions :column="2" border size="small">
-            <el-descriptions-item label="表单名称">
-              {{ formName }}
-            </el-descriptions-item>
-            <el-descriptions-item label="主表">
-              {{ tableName }}
-            </el-descriptions-item>
-            <el-descriptions-item label="表单代码" :span="2">
-              <el-input v-model="formCode" size="small" style="width: 240px" />
-              <span class="form-code-hint">可修改，用于后续引用</span>
-            </el-descriptions-item>
-          </el-descriptions>
-
-          <!-- 主表字段预览 -->
-          <div class="fields-preview" v-if="parsedResult.mainTable">
-            <h4>主表字段（{{ parsedResult.mainTable.fields?.length || 0 }} 个）</h4>
-            <el-table :data="parsedResult.mainTable.fields" size="small" max-height="300" border>
-              <el-table-column prop="fieldName" label="字段名" width="120" />
-              <el-table-column prop="displayName" label="显示名" width="160" />
-              <el-table-column prop="inputType" label="输入类型" width="100" />
-              <el-table-column prop="dbFinalType" label="数据库类型" width="160" />
-              <el-table-column prop="isSpecial" label="特殊字段" width="80">
-                <template #default="{ row }">
-                  <el-tag v-if="row.isSpecial" type="warning" size="small">是</el-tag>
-                  <span v-else>否</span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="refTable" label="关联表" width="120" />
-            </el-table>
           </div>
+        </div>
 
-          <!-- 从表预览 -->
-          <div
-            v-for="(son, idx) in parsedResult.sonTables"
-            :key="idx"
-            class="fields-preview"
-          >
-            <h4>{{ son.sonName || '从表' + (idx + 1) }}（{{ son.fields?.length || 0 }} 个字段）</h4>
-            <el-table :data="son.fields" size="small" max-height="200" border>
-              <el-table-column prop="fieldName" label="字段名" width="120" />
-              <el-table-column prop="displayName" label="显示名" width="160" />
-              <el-table-column prop="inputType" label="输入类型" width="100" />
-              <el-table-column prop="dbFinalType" label="数据库类型" width="160" />
-              <el-table-column prop="isSpecial" label="特殊字段" width="80">
-                <template #default="{ row }">
-                  <el-tag v-if="row.isSpecial" type="warning" size="small">是</el-tag>
-                  <span v-else>否</span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="refTable" label="关联表" width="120" />
-            </el-table>
+        <!-- 预览区 -->
+        <div v-if="showPreview && parsedResult" class="panel animate-fade-in-up" style="animation-delay: 0.06s; margin-top: 16px">
+          <div class="panel__header">
+            <div class="panel__title">
+              <div class="panel__title-icon" style="background: #f0fdf4; color: var(--color-success)">
+                <el-icon :size="18"><View /></el-icon>
+              </div>
+              <h2 class="panel__title-text">解析结果预览</h2>
+            </div>
+            <el-button
+              type="primary"
+              class="btn-primary-action"
+              :loading="saving"
+              @click="saveDictionary"
+            >
+              {{ saving ? '保存中...' : '确认保存' }}
+            </el-button>
           </div>
-        </el-card>
+          <div class="panel__body">
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="表单名称">
+                {{ formName }}
+              </el-descriptions-item>
+              <el-descriptions-item label="主表">
+                {{ tableName }}
+              </el-descriptions-item>
+              <el-descriptions-item label="表单代码" :span="2">
+                <el-input v-model="formCode" size="small" style="width: 240px" />
+                <span class="form-code-hint">可修改，用于后续引用</span>
+              </el-descriptions-item>
+            </el-descriptions>
+
+            <!-- 主表字段预览 -->
+            <div class="fields-preview" v-if="parsedResult.mainTable">
+              <h4>主表字段（{{ parsedResult.mainTable.fields?.length || 0 }} 个）</h4>
+              <el-table :data="parsedResult.mainTable.fields" size="small" max-height="300" border>
+                <el-table-column prop="fieldName" label="字段名" width="120" />
+                <el-table-column prop="displayName" label="显示名" width="160" />
+                <el-table-column prop="inputType" label="输入类型" width="100" />
+                <el-table-column prop="dbFinalType" label="数据库类型" width="160" />
+                <el-table-column prop="isSpecial" label="特殊字段" width="80">
+                  <template #default="{ row }">
+                    <el-tag v-if="row.isSpecial" type="warning" size="small">是</el-tag>
+                    <span v-else>否</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="refTable" label="关联表" width="120" />
+              </el-table>
+            </div>
+
+            <!-- 从表预览 -->
+            <div
+              v-for="(son, idx) in parsedResult.sonTables"
+              :key="idx"
+              class="fields-preview"
+            >
+              <h4>{{ son.sonName || '从表' + (idx + 1) }}（{{ son.fields?.length || 0 }} 个字段）</h4>
+              <el-table :data="son.fields" size="small" max-height="200" border>
+                <el-table-column prop="fieldName" label="字段名" width="120" />
+                <el-table-column prop="displayName" label="显示名" width="160" />
+                <el-table-column prop="inputType" label="输入类型" width="100" />
+                <el-table-column prop="dbFinalType" label="数据库类型" width="160" />
+                <el-table-column prop="isSpecial" label="特殊字段" width="80">
+                  <template #default="{ row }">
+                    <el-tag v-if="row.isSpecial" type="warning" size="small">是</el-tag>
+                    <span v-else>否</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="refTable" label="关联表" width="120" />
+              </el-table>
+            </div>
+          </div>
+        </div>
       </el-col>
 
       <!-- 右侧：已有数据字典 -->
       <el-col :xs="24" :lg="10">
-        <el-card shadow="never" class="existing-card">
-          <template #header>
-            <div class="existing-header">
-              <span class="card-title">已录入的数据字典</span>
-              <el-button
-                v-if="existingDictionaries.length > 0"
-                type="danger"
-                size="small"
-                text
-                @click="clearAllDictionaries"
-              >
-                清空全部
-              </el-button>
+        <div class="panel animate-fade-in-up" style="animation-delay: 0.08s">
+          <div class="panel__header">
+            <div class="panel__title">
+              <div class="panel__title-icon">
+                <el-icon :size="18"><List /></el-icon>
+              </div>
+              <h2 class="panel__title-text">已录入的数据字典</h2>
             </div>
-          </template>
-
-          <div v-if="existingDictionaries.length === 0" class="empty-hint">
-            <el-empty description="暂无数据字典" :image-size="60" />
-          </div>
-
-          <div v-else class="dict-list">
-            <div
-              v-for="item in existingDictionaries"
-              :key="item.formCode"
-              class="dict-item"
-              :class="{ 'dict-item-pinned': item.isPinned }"
+            <el-button
+              v-if="existingDictionaries.length > 0"
+              type="danger"
+              size="small"
+              text
+              @click="clearAllDictionaries"
             >
-              <div class="dict-info" @click="viewDictionary(item)">
-                <div class="dict-name">
-                  <el-icon v-if="item.isPinned" class="pin-icon"><StarFilled /></el-icon>
-                  {{ item.formName }}
+              清空全部
+            </el-button>
+          </div>
+          <div class="panel__body">
+            <div v-if="existingDictionaries.length === 0" class="history-empty">
+              <p>暂无数据字典</p>
+            </div>
+
+            <div v-else class="dict-list">
+              <div
+                v-for="item in existingDictionaries"
+                :key="item.formCode"
+                class="dict-item"
+                :class="{ 'dict-item--pinned': item.isPinned }"
+              >
+                <div class="dict-info" @click="viewDictionary(item)">
+                  <div class="dict-name">
+                    <el-icon v-if="item.isPinned" class="dict-pin"><StarFilled /></el-icon>
+                    {{ item.formName }}
+                  </div>
+                  <div class="dict-meta">
+                    <el-tag size="small" type="info">{{ item.tableName }}</el-tag>
+                    <span class="dict-code">{{ item.formCode }}</span>
+                  </div>
                 </div>
-                <div class="dict-meta">
-                  <el-tag size="small" type="info">{{ item.tableName }}</el-tag>
-                  <span class="dict-code">{{ item.formCode }}</span>
+                <div class="dict-actions">
+                  <button
+                    class="dict-action-btn"
+                    :class="{ 'dict-action-btn--pinned': item.isPinned }"
+                    @click="togglePin(item)"
+                    :title="item.isPinned ? '取消置顶' : '置顶'"
+                  >
+                    <el-icon :size="14"><StarFilled v-if="item.isPinned" /><Star v-else /></el-icon>
+                  </button>
+                  <button
+                    class="dict-action-btn dict-action-btn--danger"
+                    @click="deleteDictionary(item)"
+                  >
+                    <el-icon :size="14"><Delete /></el-icon>
+                  </button>
                 </div>
-              </div>
-              <div class="dict-actions">
-                <el-button
-                  :type="item.isPinned ? 'warning' : 'info'"
-                  size="small"
-                  text
-                  @click="togglePin(item)"
-                  :title="item.isPinned ? '取消置顶' : '置顶'"
-                >
-                  <el-icon><StarFilled v-if="item.isPinned" /><Star v-else /></el-icon>
-                </el-button>
-                <el-button
-                  type="danger"
-                  size="small"
-                  text
-                  @click="deleteDictionary(item)"
-                >
-                  删除
-                </el-button>
               </div>
             </div>
           </div>
-        </el-card>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -329,50 +341,30 @@ onMounted(() => {
 .data-dictionary {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.card-title {
-  font-size: 15px;
-  font-weight: 500;
-  color: #262626;
-}
-
-.input-hint {
-  font-size: 13px;
-  color: #8c8c8c;
-  margin-bottom: 12px;
+  gap: 0;
 }
 
 .raw-input {
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 :deep(.el-textarea__inner) {
   font-size: 13px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
   line-height: 1.6;
+  border-radius: var(--radius-md) !important;
 }
 
 .actions {
   display: flex;
   gap: 8px;
+  margin-top: 12px;
 }
 
 /* 预览区 */
-.preview-card {
-  margin-top: 16px;
-}
-
-.preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .form-code-hint {
   font-size: 12px;
-  color: #bfbfbf;
+  color: var(--color-text-muted);
   margin-left: 8px;
 }
 
@@ -382,19 +374,16 @@ onMounted(() => {
 
 .fields-preview h4 {
   font-size: 13px;
-  color: #595959;
+  color: var(--color-text-secondary);
   margin-bottom: 8px;
+  font-weight: 600;
 }
 
-/* 已有列表 */
-.existing-card {
-  height: 100%;
-}
-
+/* 字典列表 */
 .dict-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .dict-item {
@@ -402,37 +391,39 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 12px;
-  border-radius: 4px;
-  transition: background-color 0.15s;
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast);
 }
 
 .dict-item:hover {
-  background-color: #f5f7fa;
+  background-color: var(--color-bg-page);
 }
 
-.dict-item-pinned {
-  background-color: #fffbe6;
+.dict-item--pinned {
+  background-color: #fef3c7;
 }
 
-.dict-item-pinned:hover {
-  background-color: #fff7cc;
-}
-
-.pin-icon {
-  color: #faad14;
-  margin-right: 4px;
-  font-size: 14px;
+.dict-item--pinned:hover {
+  background-color: #fde68a;
 }
 
 .dict-info {
   cursor: pointer;
   flex: 1;
+  min-width: 0;
 }
 
 .dict-name {
   font-size: 14px;
-  color: #262626;
+  color: var(--color-text-primary);
+  font-weight: 500;
   margin-bottom: 4px;
+}
+
+.dict-pin {
+  color: var(--color-warning);
+  margin-right: 4px;
+  font-size: 14px;
 }
 
 .dict-meta {
@@ -443,31 +434,40 @@ onMounted(() => {
 
 .dict-code {
   font-size: 12px;
-  color: #bfbfbf;
-}
-
-.existing-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  color: var(--color-text-muted);
 }
 
 .dict-actions {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 2px;
 }
 
-.empty-hint {
-  padding: 20px 0;
+.dict-action-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
 }
 
-:deep(.el-card__header) {
-  padding: 14px 20px;
-  border-bottom: 1px solid #f0f0f0;
+.dict-action-btn:hover {
+  background: var(--color-bg-page);
+  color: var(--color-text-secondary);
 }
 
-:deep(.el-card__body) {
-  padding: 16px 20px;
+.dict-action-btn--pinned {
+  color: var(--color-warning);
+}
+
+.dict-action-btn--danger:hover {
+  color: var(--color-danger);
+  background: #fef2f2;
 }
 </style>

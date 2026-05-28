@@ -1,8 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Star, StarFilled, Delete } from '@element-plus/icons-vue'
+import { StarFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
+import HistoryPanel from '../components/HistoryPanel.vue'
 
 // ── 模板类型 ──
 
@@ -121,6 +122,7 @@ async function batchDelete() {
     )
     await axios.delete('/api/dee/history/batch', { data: { ids: selectedIds.value } })
     selectedIds.value = []
+    selectMode.value = false
     await loadHistory()
     ElMessage.success('批量删除完成')
   } catch (e) {
@@ -184,168 +186,135 @@ onMounted(() => {
       <!-- 左侧：主区域 -->
       <el-col :xs="24" :lg="17">
         <!-- 模板类型选择 -->
-        <el-card shadow="never">
-          <template #header>
-            <span class="card-title">模板类型</span>
-          </template>
-
-          <div class="type-grid">
-            <div
-              v-for="t in templateTypes"
-              :key="t.key"
-              class="type-item"
-              :class="{ active: selectedType === t.key }"
-              @click="selectedType = t.key"
-            >
-              <el-icon :size="24"><component :is="t.icon" /></el-icon>
-              <div class="type-label">{{ t.label }}</div>
-              <div class="type-desc">{{ t.desc }}</div>
+        <div class="panel animate-fade-in-up">
+          <div class="panel__header">
+            <div class="panel__title">
+              <div class="panel__title-icon">
+                <el-icon :size="18"><Share /></el-icon>
+              </div>
+              <div>
+                <h2 class="panel__title-text">模板类型</h2>
+                <p class="panel__title-desc">选择 DEE 模板类型</p>
+              </div>
             </div>
           </div>
-        </el-card>
+          <div class="panel__body">
+            <div class="type-grid">
+              <div
+                v-for="t in templateTypes"
+                :key="t.key"
+                class="type-item"
+                :class="{ active: selectedType === t.key }"
+                @click="selectedType = t.key"
+              >
+                <el-icon :size="24"><component :is="t.icon" /></el-icon>
+                <div class="type-label">{{ t.label }}</div>
+                <div class="type-desc">{{ t.desc }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- 输入区 -->
-        <el-card shadow="never" class="input-card">
-          <template #header>
-            <div class="input-header">
-              <span class="card-title">需求描述</span>
-              <el-button size="small" text type="primary" @click="useQuickDesc">
-                填入示例
-              </el-button>
+        <div class="panel animate-fade-in-up" style="animation-delay: 0.06s; margin-top: 16px">
+          <div class="panel__header">
+            <div class="panel__title">
+              <div class="panel__title-icon">
+                <el-icon :size="18"><EditPen /></el-icon>
+              </div>
+              <div>
+                <h2 class="panel__title-text">需求描述</h2>
+                <p class="panel__title-desc">描述你需要的 DEE 模板</p>
+              </div>
             </div>
-          </template>
-
-          <el-input
-            v-model="description"
-            type="textarea"
-            :rows="3"
-            placeholder="描述你需要的 DEE 模板，例如：生成请假审批流程模板"
-          />
-
-          <div class="actions">
-            <el-button
-              type="primary"
-              :loading="generating"
-              @click="generate"
-            >
-              <el-icon v-if="!generating"><Promotion /></el-icon>
-              {{ generating ? '生成中...' : '生成模板' }}
+            <el-button size="small" text type="primary" @click="useQuickDesc">
+              填入示例
             </el-button>
-            <el-button @click="clearAll">清空</el-button>
           </div>
-        </el-card>
+          <div class="panel__body">
+            <el-input
+              v-model="description"
+              type="textarea"
+              :rows="3"
+              placeholder="描述你需要的 DEE 模板，例如：生成请假审批流程模板"
+            />
+            <div class="actions">
+              <el-button
+                type="primary"
+                class="btn-primary-action"
+                :loading="generating"
+                @click="generate"
+              >
+                <el-icon v-if="!generating"><Promotion /></el-icon>
+                {{ generating ? '生成中...' : '生成模板' }}
+              </el-button>
+              <el-button @click="clearAll">清空</el-button>
+            </div>
+          </div>
+        </div>
 
         <!-- 结果区 -->
-        <el-card shadow="never" class="result-card">
-          <template #header>
-            <div class="result-header">
-              <span class="card-title">生成结果</span>
-              <el-button
-                v-if="resultJson"
-                size="small"
-                type="primary"
-                plain
-                @click="copyResult"
-              >
-                <el-icon><CopyDocument /></el-icon>
-                复制
-              </el-button>
+        <div class="panel animate-fade-in-up" style="animation-delay: 0.12s; margin-top: 16px">
+          <div class="panel__header">
+            <div class="panel__title">
+              <div class="panel__title-icon" style="background: #f0fdf4; color: var(--color-success)">
+                <el-icon :size="18"><Document /></el-icon>
+              </div>
+              <div>
+                <h2 class="panel__title-text">生成结果</h2>
+                <p class="panel__title-desc">DEE 模板代码</p>
+              </div>
             </div>
-          </template>
-
-          <div v-if="resultJson" class="json-output">
-            <pre><code>{{ resultJson }}</code></pre>
+            <el-button
+              v-if="resultJson"
+              size="small"
+              type="primary"
+              plain
+              @click="copyResult"
+            >
+              <el-icon><CopyDocument /></el-icon>
+              复制
+            </el-button>
           </div>
-          <el-empty v-else description="选择模板类型并输入需求后点击「生成模板」" :image-size="80" />
-        </el-card>
+          <div class="panel__body">
+            <div v-if="resultJson" class="code-block">
+              <pre><code>{{ resultJson }}</code></pre>
+            </div>
+            <el-empty v-else description="选择模板类型并输入需求后点击「生成模板」" :image-size="80" />
+          </div>
+        </div>
       </el-col>
 
       <!-- 右侧：历史记录 -->
       <el-col :xs="24" :lg="7">
-        <el-card shadow="never" class="history-card">
-          <template #header>
-            <div class="history-header">
-              <span class="card-title">历史记录</span>
-              <div class="history-header-actions">
-                <el-button
-                  v-if="history.length > 0 && !selectMode"
-                  size="small"
-                  text
-                  @click="selectMode = true"
-                >
-                  选择
-                </el-button>
-                <template v-if="selectMode">
-                  <el-button size="small" text @click="toggleSelectAll">
-                    {{ selectedIds.length === history.length ? '取消全选' : '全选' }}
-                  </el-button>
-                  <el-button
-                    v-if="selectedIds.length > 0"
-                    type="danger"
-                    size="small"
-                    text
-                    @click="batchDelete"
-                  >
-                    删除 ({{ selectedIds.length }})
-                  </el-button>
-                  <el-button size="small" text @click="selectMode = false; selectedIds = []">取消</el-button>
-                </template>
-              </div>
-            </div>
-          </template>
-
-          <div v-if="history.length === 0" class="history-empty">
-            <el-empty description="暂无记录" :image-size="60" />
-          </div>
-
-          <div v-else class="history-list">
-            <div
-              v-for="item in history"
-              :key="item.id"
-              class="history-item"
-              :class="{ 'history-item-pinned': item.isPinned, 'history-item-selected': selectedIds.includes(item.id) }"
-            >
-              <el-checkbox
-                v-if="selectMode"
-                :model-value="selectedIds.includes(item.id)"
-                @change="toggleSelect(item.id)"
-                @click.stop
-                class="history-checkbox"
-              />
-              <el-tooltip :content="item.desc" placement="left" :show-after="300">
-                <div class="history-content" @click="loadFromHistory(item)">
-                  <div class="history-meta">
-                    <el-tag size="small" type="info">{{ typeLabel(item.type) }}</el-tag>
-                    <span class="history-time">{{ item.time }}</span>
-                  </div>
-                  <div class="history-desc">
-                    <el-icon v-if="item.isPinned" class="pin-icon"><StarFilled /></el-icon>
-                    {{ item.desc }}
-                  </div>
+        <div class="animate-fade-in-up" style="animation-delay: 0.16s">
+          <HistoryPanel
+            :history="history"
+            :select-mode="selectMode"
+            :selected-ids="selectedIds"
+            @load="loadFromHistory"
+            @pin="togglePin"
+            @delete="deleteHistory"
+            @toggle-select="toggleSelect"
+            @toggle-select-all="toggleSelectAll"
+            @batch-delete="batchDelete"
+            @enter-select="selectMode = true"
+            @exit-select="selectMode = false; selectedIds = []"
+          >
+            <template #item="{ item }">
+              <div class="dee-history-item">
+                <div class="dee-history-meta">
+                  <el-tag size="small" type="info">{{ typeLabel(item.type) }}</el-tag>
+                  <span class="dee-history-time">{{ item.time }}</span>
                 </div>
-              </el-tooltip>
-              <div v-if="!selectMode" class="history-actions">
-                <el-button
-                  :type="item.isPinned ? 'warning' : 'info'"
-                  size="small"
-                  text
-                  @click.stop="togglePin(item)"
-                  :title="item.isPinned ? '取消置顶' : '置顶'"
-                >
-                  <el-icon><StarFilled v-if="item.isPinned" /><Star v-else /></el-icon>
-                </el-button>
-                <el-button
-                  type="danger"
-                  size="small"
-                  text
-                  @click.stop="deleteHistory(item)"
-                >
-                  <el-icon><Delete /></el-icon>
-                </el-button>
+                <div class="dee-history-desc">
+                  <el-icon v-if="item.isPinned" class="dee-history-pin"><StarFilled /></el-icon>
+                  {{ item.desc }}
+                </div>
               </div>
-            </div>
-          </div>
-        </el-card>
+            </template>
+          </HistoryPanel>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -355,13 +324,7 @@ onMounted(() => {
 .dee-copilot {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.card-title {
-  font-size: 15px;
-  font-weight: 500;
-  color: #262626;
+  gap: 0;
 }
 
 /* 模板类型选择 */
@@ -375,203 +338,80 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 16px 8px;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
+  gap: 8px;
+  padding: 20px 12px;
+  background: var(--color-bg-card);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
   text-align: center;
 }
 
 .type-item:hover {
-  border-color: #409eff;
-  color: #409eff;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .type-item.active {
-  border-color: #409eff;
-  background: #ecf5ff;
-  color: #409eff;
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .type-label {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .type-desc {
-  font-size: 11px;
-  color: #8c8c8c;
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 
 .type-item.active .type-desc {
-  color: #66b1ff;
+  color: var(--color-primary);
 }
 
-/* 输入区 */
-.input-card {
-  margin-top: 16px;
-}
-
-.input-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
+/* 操作栏 */
 .actions {
   display: flex;
   gap: 8px;
-  margin-top: 12px;
-}
-
-/* 结果区 */
-.result-card {
   margin-top: 16px;
 }
 
-.result-header {
+/* 历史记录自定义内容 */
+.dee-history-item {
+  width: 100%;
+}
+
+.dee-history-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 4px;
 }
 
-.json-output {
-  background: #1e1e1e;
-  border-radius: 6px;
-  padding: 16px;
-  overflow-x: auto;
-}
-
-.json-output pre {
-  margin: 0;
-}
-
-.json-output code {
-  color: #d4d4d4;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  white-space: pre;
-}
-
-/* 历史记录 */
-.history-card {
-  height: 100%;
-}
-
-.history-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.history-header-actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.history-checkbox {
-  margin-right: 8px;
-  flex-shrink: 0;
-}
-
-.history-item-selected {
-  background-color: #e6f7ff !important;
-}
-
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.history-item {
-  padding: 10px 12px;
-  border-radius: 4px;
-  transition: background-color 0.15s;
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-
-.history-item:hover {
-  background-color: #f5f7fa;
-}
-
-.history-item:hover .history-actions {
-  opacity: 1;
-}
-
-.history-item-pinned {
-  background-color: #fffbe6;
-}
-
-.history-item-pinned:hover {
-  background-color: #fff7cc;
-}
-
-.history-content {
-  flex: 1;
-  cursor: pointer;
-  min-width: 0;
-  padding-right: 60px;
-}
-
-.history-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.history-time {
+.dee-history-time {
   font-size: 12px;
-  color: #bfbfbf;
+  color: var(--color-text-muted);
 }
 
-.history-desc {
+.dee-history-desc {
   font-size: 13px;
-  color: #262626;
-  line-height: 1.5;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  overflow: hidden;
 }
 
-.pin-icon {
-  color: #faad14;
+.dee-history-pin {
+  color: var(--color-warning);
   margin-right: 4px;
   font-size: 12px;
-}
-
-.history-actions {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 0.15s;
-  background: inherit;
-  padding-left: 8px;
-}
-
-.history-empty {
-  padding: 20px 0;
-}
-
-:deep(.el-card__header) {
-  padding: 14px 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.el-card__body) {
-  padding: 16px 20px;
 }
 
 @media (max-width: 1200px) {

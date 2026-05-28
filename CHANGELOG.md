@@ -1,5 +1,171 @@
 # CHANGELOG
 
+# 2026-05-28
+
+## 前端 UI/UX 重构（现代简洁风格）
+
+### 设计风格升级
+
+- 侧边栏：深色背景 → 浅色背景 + 线性图标
+- 卡片：毛玻璃效果 → 纯白 + 轻阴影
+- 主色调：蓝色（#3b82f6）
+- 圆角：中等（12-16px）
+- 整体风格：简洁、现代、专业
+
+### 侧边栏菜单重构
+
+新菜单结构：
+```
+Dashboard
+AI Copilot
+├── SQL Copilot
+├── 接口文档生成
+├── DEE 代码生成
+
+知识资产
+├── 系统知识库
+├── AI Prompt 管理
+
+系统管理
+├── 系统运行日志
+├── 系统设置
+```
+
+### SQL Copilot 页面重构
+
+- 布局调整：左（输入区）+ 中（结果区）+ 右（历史记录 + 快捷示例）
+- 智能生成 SQL 卡片：
+  - 标题区：智能生成 SQL + 系统表状态
+  - 推荐问题 chips
+  - 输入框
+  - 操作栏：选择表单 + 生成 SQL + 清空
+- 生成结果卡片：
+  - 标题区：生成结果 + SQL 标签 + 复制按钮
+  - 代码区域：行号 + SQL 语法高亮
+  - 底部状态栏：SQL 生成成功！共 X 行
+- 右侧面板：
+  - 历史记录 + 查看全部
+  - 快捷示例 + 换一批功能
+
+### 新增功能（仅前端）
+
+1. **快捷示例换一批**：预设多组示例，点击换一批随机展示
+2. **系统表状态显示**：静态显示已录入的数据字典数量（7 张系统表已就绪）
+
+### 样式统一
+
+- 所有页面卡片样式统一
+- 按钮样式统一
+- 表单样式统一
+- 移除毛玻璃效果
+
+### 涉及文件
+
+- frontend: style.css（设计系统）
+- frontend: AdminLayout.vue（侧边栏布局）
+- frontend: SqlCopilot.vue（SQL Copilot 页面）
+- frontend: DeeCopilot.vue（样式统一）
+- frontend: ApiDocGenerator.vue（样式统一）
+- frontend: FieldMapper.vue（样式统一）
+- frontend: DataDictionary.vue（样式统一）
+- frontend: Dashboard.vue（样式统一）
+- frontend: HistoryPanel.vue（全局组件优化）
+
+### 约束验证
+
+- ✅ 仅重构前端 UI/UX
+- ✅ 未修改后端接口
+- ✅ 未修改 API 参数结构
+- ✅ 未修改业务逻辑
+- ✅ 未影响现有 SQL Copilot 功能
+
+---
+
+# 2026-05-28
+
+## 接口文档自动生成器（完整功能）
+
+### 功能说明
+
+基于数据字典自动生成标准化 Excel 接口文档，包含 6 个 Sheet 页：
+1. **接口基础信息** - 自动填入配置信息（接口编码/名称/类型/联系人等）
+2. **Collection** - 留空，自行插入 Postman JSON
+3. **Data Mapping** - 从数据字典自动生成字段映射表
+4. **Get Token** - 自动生成 Token 请求示例（mule/direct 两种模式）
+5. **RESTful API** - 自动生成业务接口请求示例（mule/direct 两种模式）
+6. **OA常见报错案例** - 8 种常见错误场景参考
+
+### 后端实现
+
+- ApiDocService.java（~1560行）：Excel 生成核心逻辑
+- 支持两种连接方式：过 Mule（外部系统）/ 直连（内部OA系统）
+- Apache POI (XSSFWorkbook) 生成 .xlsx
+- 样式系统：labelStyle/valueStyle/codeStyle/apiLabelStyle 等 10+ 种样式
+- Mule 模式：固定 Token URL/Workflow URL/client_id/client_secret（Excel 模板写死）
+- 直连模式：OA workflow 标准调用模板
+
+### 前端实现
+
+- ApiDocGenerator.vue：配置表单 + 生成预览 + 历史记录
+- 数据字典远程搜索选择
+- 接口类型下拉（新增接口/修改接口）
+- 连接方式单选（直连/过Mule）
+- 源系统/联系人配置
+- 历史记录面板：置顶/删除/批量删除/点击加载
+
+### 历史记录功能
+
+- api_doc_history 表（SQLite）
+- ApiDocHistory 模型 + Mapper + XML
+- REST API：GET /history, PUT /{id}/pin, DELETE /{id}, DELETE /batch
+- 生成 Excel 时自动保存历史记录
+- 前端：选择模式、全选、批量删除、点击加载配置
+
+### 涉及文件
+
+- backend: ApiDocService.java, ApiDocController.java, ApiDocHistory.java, ApiDocHistoryMapper.java/xml
+- backend: schema.sql（新增 api_doc_history 表）
+- frontend: ApiDocGenerator.vue
+
+---
+
+# 2026-05-25
+
+## 启动/停止脚本窗口管理优化
+
+### 问题描述
+
+- stop.bat 无法关闭前后端终端窗口（只能杀进程，窗口卡在"请按任意键继续"）
+- `exit` 命令在双击运行 .bat 时无效
+- `taskkill /FI "WINDOWTITLE"` 窗口标题匹配不可靠
+
+### 解决方案
+
+**start.bat 优化：**
+- 添加自动最小化功能（启动后主窗口自动最小化）
+- 使用 `start /min "OA-Backend" cmd /k "title OA-Backend && ..."` 启动前后端
+- 窗口标题明确设置为 `OA-Backend` 和 `OA-Frontend`
+- 执行完自动关闭主窗口
+
+**stop.bat 优化：**
+- 使用 PowerShell `Get-WmiObject Win32_Process` 按命令行内容匹配
+- 精准关闭：匹配 `spring-boot`（后端）和 `npm.*dev`（前端）
+- 备用方案：按端口 + 进程名杀进程
+- 自动最小化执行
+
+### 关键技术点
+
+- `taskkill /FI "WINDOWTITLE"` 不可靠（cmd 窗口标题可能被进程覆盖）
+- PowerShell WMI 按 CommandLine 匹配更精准
+- 双击 .bat 时 `exit` 不关闭窗口，需用 `start /min` + `exit` 组合
+
+### 涉及文件
+
+- start.bat（自动最小化 + 窗口标题设置）
+- stop.bat（PowerShell 精准关闭 + 备用清理）
+
+---
+
 # 2026-05-20
 
 ## SQL Copilot 优化 + Bug 修复

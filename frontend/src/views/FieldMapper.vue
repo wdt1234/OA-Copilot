@@ -1,8 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Star, StarFilled, Delete } from '@element-plus/icons-vue'
+import { StarFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
+import HistoryPanel from '../components/HistoryPanel.vue'
 
 // ── 状态 ──
 
@@ -108,6 +109,7 @@ async function batchDelete() {
     )
     await axios.delete('/api/field-mapping/history/batch', { data: { ids: selectedIds.value } })
     selectedIds.value = []
+    selectMode.value = false
     await loadHistory()
     ElMessage.success('批量删除完成')
   } catch (e) {
@@ -188,191 +190,146 @@ onMounted(() => {
       <!-- 左侧：主区域 -->
       <el-col :xs="24" :lg="17">
         <!-- 输入区 -->
-        <el-card shadow="never">
-          <template #header>
-            <span class="card-title">字段映射</span>
-          </template>
-
-          <div class="quick-forms">
-            <span class="quick-label">快捷表单：</span>
-            <el-tag
-              v-for="item in quickForms"
-              :key="item.id"
-              size="small"
-              class="quick-tag"
-              @click="useQuickForm(item)"
-            >{{ item.id }} ({{ item.name }})</el-tag>
+        <div class="panel animate-fade-in-up">
+          <div class="panel__header">
+            <div class="panel__title">
+              <div class="panel__title-icon">
+                <el-icon :size="18"><Switch /></el-icon>
+              </div>
+              <div>
+                <h2 class="panel__title-text">字段映射</h2>
+                <p class="panel__title-desc">表单字段自动映射</p>
+              </div>
+            </div>
           </div>
+          <div class="panel__body">
+            <div class="quick-forms">
+              <span class="quick-label">快捷表单：</span>
+              <el-tag
+                v-for="item in quickForms"
+                :key="item.id"
+                size="small"
+                class="quick-tag"
+                @click="useQuickForm(item)"
+              >{{ item.id }} ({{ item.name }})</el-tag>
+            </div>
 
-          <el-row :gutter="12">
-            <el-col :span="8">
-              <div class="input-label">表单 ID</div>
-              <el-input
-                v-model="formId"
-                placeholder="如 formmain_1001"
-              />
-            </el-col>
-            <el-col :span="16">
-              <div class="input-label">字段列表（每行一个）</div>
-              <el-input
-                v-model="inputFields"
-                type="textarea"
-                :rows="3"
-                placeholder="field0001&#10;field0002&#10;field0003"
-              />
-            </el-col>
-          </el-row>
+            <el-row :gutter="12">
+              <el-col :span="8">
+                <div class="input-label">表单 ID</div>
+                <el-input
+                  v-model="formId"
+                  placeholder="如 formmain_1001"
+                />
+              </el-col>
+              <el-col :span="16">
+                <div class="input-label">字段列表（每行一个）</div>
+                <el-input
+                  v-model="inputFields"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="field0001&#10;field0002&#10;field0003"
+                />
+              </el-col>
+            </el-row>
 
-          <div class="actions">
-            <el-button
-              type="primary"
-              :loading="generating"
-              @click="generate"
-            >
-              <el-icon v-if="!generating"><Promotion /></el-icon>
-              {{ generating ? '映射中...' : '生成映射' }}
-            </el-button>
-            <el-button @click="clearAll">清空</el-button>
+            <div class="actions">
+              <el-button
+                type="primary"
+                class="btn-primary-action"
+                :loading="generating"
+                @click="generate"
+              >
+                <el-icon v-if="!generating"><Promotion /></el-icon>
+                {{ generating ? '映射中...' : '生成映射' }}
+              </el-button>
+              <el-button @click="clearAll">清空</el-button>
+            </div>
           </div>
-        </el-card>
+        </div>
 
         <!-- 映射结果表格 -->
-        <el-card v-if="mappingFields.length > 0" shadow="never" class="result-card">
-          <template #header>
-            <div class="result-header">
-              <span class="card-title">映射结果</span>
-              <el-button
-                size="small"
-                type="primary"
-                plain
-                @click="copyResult"
-              >
-                <el-icon><CopyDocument /></el-icon>
-                复制 JSON
-              </el-button>
+        <div v-if="mappingFields.length > 0" class="panel animate-fade-in-up" style="animation-delay: 0.06s; margin-top: 16px">
+          <div class="panel__header">
+            <div class="panel__title">
+              <div class="panel__title-icon" style="background: #f0fdf4; color: var(--color-success)">
+                <el-icon :size="18"><Grid /></el-icon>
+              </div>
+              <h2 class="panel__title-text">映射结果</h2>
             </div>
-          </template>
-
-          <el-table :data="mappingFields" stripe size="small" border>
-            <el-table-column prop="source" label="源字段" width="120" />
-            <el-table-column prop="target" label="目标字段" width="140" />
-            <el-table-column prop="label" label="中文名称" width="140" />
-            <el-table-column prop="type" label="类型" width="90">
-              <template #default="{ row }">
-                <el-tag size="small" :type="row.type === 'number' ? 'warning' : row.type === 'date' ? 'success' : ''">
-                  {{ row.type }}
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+            <el-button size="small" type="primary" plain @click="copyResult">
+              <el-icon><CopyDocument /></el-icon>
+              复制 JSON
+            </el-button>
+          </div>
+          <div class="panel__body">
+            <el-table :data="mappingFields" stripe size="small" border>
+              <el-table-column prop="source" label="源字段" width="120" />
+              <el-table-column prop="target" label="目标字段" width="140" />
+              <el-table-column prop="label" label="中文名称" width="140" />
+              <el-table-column prop="type" label="类型" width="90">
+                <template #default="{ row }">
+                  <el-tag size="small" :type="row.type === 'number' ? 'warning' : row.type === 'date' ? 'success' : ''">
+                    {{ row.type }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
 
         <!-- JSON 输出 -->
-        <el-card v-if="resultJson" shadow="never" class="json-card">
-          <template #header>
-            <div class="result-header">
-              <span class="card-title">JSON 输出</span>
-              <el-button size="small" text @click="showTable = !showTable">
-                {{ showTable ? '收起表格' : '展开表格' }}
-              </el-button>
-            </div>
-          </template>
-          <div class="json-output">
-            <pre><code>{{ resultJson }}</code></pre>
+        <div v-if="resultJson" class="panel animate-fade-in-up" style="animation-delay: 0.12s; margin-top: 16px">
+          <div class="panel__header">
+            <h2 class="panel__title-text">JSON 输出</h2>
+            <el-button size="small" text @click="showTable = !showTable">
+              {{ showTable ? '收起表格' : '展开表格' }}
+            </el-button>
           </div>
-        </el-card>
+          <div class="panel__body">
+            <div class="code-block">
+              <pre><code>{{ resultJson }}</code></pre>
+            </div>
+          </div>
+        </div>
 
         <!-- 空状态 -->
-        <el-card v-if="!resultJson && !generating" shadow="never" class="empty-card">
-          <el-empty description="输入表单 ID 和字段列表后点击「生成映射」" :image-size="80" />
-        </el-card>
+        <div v-if="!resultJson && !generating" class="panel animate-fade-in-up" style="animation-delay: 0.12s; margin-top: 16px">
+          <div class="panel__body">
+            <el-empty description="输入表单 ID 和字段列表后点击「生成映射」" :image-size="80" />
+          </div>
+        </div>
       </el-col>
 
       <!-- 右侧：历史记录 -->
       <el-col :xs="24" :lg="7">
-        <el-card shadow="never" class="history-card">
-          <template #header>
-            <div class="history-header">
-              <span class="card-title">历史记录</span>
-              <div class="history-header-actions">
-                <el-button
-                  v-if="history.length > 0 && !selectMode"
-                  size="small"
-                  text
-                  @click="selectMode = true"
-                >
-                  选择
-                </el-button>
-                <template v-if="selectMode">
-                  <el-button size="small" text @click="toggleSelectAll">
-                    {{ selectedIds.length === history.length ? '取消全选' : '全选' }}
-                  </el-button>
-                  <el-button
-                    v-if="selectedIds.length > 0"
-                    type="danger"
-                    size="small"
-                    text
-                    @click="batchDelete"
-                  >
-                    删除 ({{ selectedIds.length }})
-                  </el-button>
-                  <el-button size="small" text @click="selectMode = false; selectedIds = []">取消</el-button>
-                </template>
-              </div>
-            </div>
-          </template>
-
-          <div v-if="history.length === 0" class="history-empty">
-            <el-empty description="暂无记录" :image-size="60" />
-          </div>
-
-          <div v-else class="history-list">
-            <div
-              v-for="item in history"
-              :key="item.id"
-              class="history-item"
-              :class="{ 'history-item-pinned': item.isPinned, 'history-item-selected': selectedIds.includes(item.id) }"
-            >
-              <el-checkbox
-                v-if="selectMode"
-                :model-value="selectedIds.includes(item.id)"
-                @change="toggleSelect(item.id)"
-                @click.stop
-                class="history-checkbox"
-              />
-              <el-tooltip :content="item.formId" placement="left" :show-after="300">
-                <div class="history-content" @click="loadFromHistory(item)">
-                  <div class="history-meta">
-                    <span class="history-form">
-                      <el-icon v-if="item.isPinned" class="pin-icon"><StarFilled /></el-icon>
-                      {{ item.formId }}
-                    </span>
-                    <span class="history-time">{{ item.time }}</span>
-                  </div>
+        <div class="animate-fade-in-up" style="animation-delay: 0.16s">
+          <HistoryPanel
+            :history="history"
+            :select-mode="selectMode"
+            :selected-ids="selectedIds"
+            @load="loadFromHistory"
+            @pin="togglePin"
+            @delete="deleteHistory"
+            @toggle-select="toggleSelect"
+            @toggle-select-all="toggleSelectAll"
+            @batch-delete="batchDelete"
+            @enter-select="selectMode = true"
+            @exit-select="selectMode = false; selectedIds = []"
+          >
+            <template #item="{ item }">
+              <div class="fm-history-item">
+                <div class="fm-history-meta">
+                  <span class="fm-history-form">
+                    <el-icon v-if="item.isPinned" class="fm-history-pin"><StarFilled /></el-icon>
+                    {{ item.formId }}
+                  </span>
+                  <span class="fm-history-time">{{ item.time }}</span>
                 </div>
-              </el-tooltip>
-              <div v-if="!selectMode" class="history-actions">
-                <el-button
-                  :type="item.isPinned ? 'warning' : 'info'"
-                  size="small"
-                  text
-                  @click.stop="togglePin(item)"
-                  :title="item.isPinned ? '取消置顶' : '置顶'"
-                >
-                  <el-icon><StarFilled v-if="item.isPinned" /><Star v-else /></el-icon>
-                </el-button>
-                <el-button
-                  type="danger"
-                  size="small"
-                  text
-                  @click.stop="deleteHistory(item)"
-                >
-                  <el-icon><Delete /></el-icon>
-                </el-button>
               </div>
-            </div>
-          </div>
-        </el-card>
+            </template>
+          </HistoryPanel>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -382,13 +339,7 @@ onMounted(() => {
 .field-mapper {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.card-title {
-  font-size: 15px;
-  font-weight: 500;
-  color: #262626;
+  gap: 0;
 }
 
 /* 快捷表单 */
@@ -402,7 +353,7 @@ onMounted(() => {
 
 .quick-label {
   font-size: 13px;
-  color: #8c8c8c;
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
@@ -412,15 +363,17 @@ onMounted(() => {
 }
 
 .quick-tag:hover {
-  color: #409eff;
-  border-color: #409eff;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 /* 输入 */
 .input-label {
   font-size: 13px;
-  color: #595959;
-  margin-bottom: 6px;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .actions {
@@ -429,156 +382,31 @@ onMounted(() => {
   margin-top: 16px;
 }
 
-/* 结果 */
-.result-card {
-  margin-top: 16px;
+/* 历史记录自定义内容 */
+.fm-history-item {
+  width: 100%;
 }
 
-.result-header {
+.fm-history-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* JSON */
-.json-card {
-  margin-top: 16px;
-}
-
-.json-output {
-  background: #1e1e1e;
-  border-radius: 6px;
-  padding: 16px;
-  overflow-x: auto;
-}
-
-.json-output pre {
-  margin: 0;
-}
-
-.json-output code {
-  color: #d4d4d4;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+.fm-history-form {
   font-size: 13px;
-  line-height: 1.6;
-  white-space: pre;
-}
-
-/* 空状态 */
-.empty-card {
-  margin-top: 16px;
-}
-
-/* 历史记录 */
-.history-card {
-  height: 100%;
-}
-
-.history-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.history-header-actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.history-checkbox {
-  margin-right: 8px;
-  flex-shrink: 0;
-}
-
-.history-item-selected {
-  background-color: #e6f7ff !important;
-}
-
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.history-item {
-  padding: 10px 12px;
-  border-radius: 4px;
-  transition: background-color 0.15s;
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-
-.history-item:hover {
-  background-color: #f5f7fa;
-}
-
-.history-item:hover .history-actions {
-  opacity: 1;
-}
-
-.history-item-pinned {
-  background-color: #fffbe6;
-}
-
-.history-item-pinned:hover {
-  background-color: #fff7cc;
-}
-
-.history-content {
-  flex: 1;
-  cursor: pointer;
-  min-width: 0;
-  padding-right: 60px;
-}
-
-.history-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.history-form {
-  font-size: 13px;
-  color: #262626;
+  color: var(--color-text-primary);
   font-weight: 500;
 }
 
-.pin-icon {
-  color: #faad14;
+.fm-history-pin {
+  color: var(--color-warning);
   margin-right: 4px;
   font-size: 12px;
 }
 
-.history-time {
+.fm-history-time {
   font-size: 12px;
-  color: #bfbfbf;
-}
-
-.history-actions {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 0.15s;
-  background: inherit;
-  padding-left: 8px;
-}
-
-.history-empty {
-  padding: 20px 0;
-}
-
-:deep(.el-card__header) {
-  padding: 14px 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.el-card__body) {
-  padding: 16px 20px;
+  color: var(--color-text-muted);
 }
 </style>

@@ -1,15 +1,92 @@
-* {
+/* ═══════════════════════════════════════════════════════
+   OA Copilot - Design System
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  /* ── 主色调 ── */
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-primary-light: #eff6ff;
+  --color-primary-lighter: #f0f9ff;
+
+  /* ── 中性色 ── */
+  --color-bg-page: #f5f7fa;
+  --color-bg-card: #ffffff;
+  --color-bg-sidebar: #ffffff;
+  --color-bg-sidebar-hover: #f5f7fa;
+  --color-bg-sidebar-active: #eff6ff;
+
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  /* ── 边框 ── */
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+
+  /* ── 状态色 ── */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* ── 圆角 ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* ── 阴影 ── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* ── 间距 ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* ── 过渡 ── */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* ── 侧边栏 ── */
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 64px;
+
+  /* ── 顶栏 ── */
+  --header-height: 60px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Reset
+   ═══════════════════════════════════════════════════════ */
+
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Inter', 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', Arial, sans-serif;
+html {
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f7fa;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  color: var(--color-text-primary);
+  background: linear-gradient(135deg, #f0f4f8 0%, #e8eef5 50%, #f0f4f8 100%);
+  background-attachment: fixed;
+  line-height: 1.6;
+  overflow: hidden;
 }
 
 #app {
@@ -17,39 +94,48 @@ body {
   height: 100vh;
 }
 
-/* 全局卡片样式优化 */
+/* ═══════════════════════════════════════════════════════
+   Element Plus Override
+   ═══════════════════════════════════════════════════════ */
+
 .el-card {
-  border-radius: 8px !important;
-  border: 1px solid #e4e7ed !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-  transition: box-shadow 0.2s ease !important;
+  --el-card-border-radius: var(--radius-lg) !important;
+  --el-card-border-color: var(--color-border-light) !important;
+  --el-card-padding: 0 !important;
+  border: 1px solid var(--color-border-light) !important;
+  box-shadow: var(--shadow-card) !important;
 }
 
-.el-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-}
-
-/* 全局按钮样式优化 */
 .el-button {
-  border-radius: 6px !important;
-  font-weight: 500 !important;
+  --el-button-border-radius: var(--radius-sm) !important;
 }
 
-/* 全局输入框样式优化 */
-.el-input__wrapper,
-.el-textarea__inner {
-  border-radius: 6px !important;
+.el-input__wrapper {
+  border-radius: var(--radius-sm) !important;
 }
 
-/* 全局标签样式优化 */
 .el-tag {
-  border-radius: 4px !important;
+  --el-tag-border-radius: 6px !important;
 }
 
-/* 滚动条美化 */
+.el-table {
+  --el-table-border-color: var(--color-border-light) !important;
+}
+
+.el-table th.el-table__cell {
+  background: #f8fafc !important;
+  color: var(--color-text-secondary) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Scrollbar
+   ═══════════════════════════════════════════════════════ */
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -57,10 +143,317 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #d1d5db;
-  border-radius: 3px;
+  background-color: #cbd5e1;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #9ca3af;
+  background-color: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Animations
+   ═══════════════════════════════════════════════════════ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--transition-normal) ease both;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft var(--transition-normal) ease both;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Panel (全局卡片)
+   ═══════════════════════════════════════════════════════ */
+
+.panel {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow var(--transition-normal);
+}
+
+.panel:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+}
+
+.panel__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel__title-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.panel__title-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.panel__title-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.panel__body {
+  padding: 16px 20px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Primary Action Button
+   ═══════════════════════════════════════════════════════ */
+
+.btn-primary-action {
+  border-radius: var(--radius-md) !important;
+  font-weight: 600 !important;
+  padding: 10px 24px !important;
+  background: var(--color-primary) !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.btn-primary-action:hover {
+  background: var(--color-primary-hover) !important;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Code Block (暗色代码块)
+   ═══════════════════════════════════════════════════════ */
+
+.code-block {
+  background: #0d1117;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.code-block pre {
+  margin: 0;
+}
+
+.code-block code {
+  color: #c9d1d9;
+  font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+/* ═══════════════════════════════════════════════════════
+   History List (历史记录公共样式)
+   ═══════════════════════════════════════════════════════ */
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-item {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast);
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.history-item:hover {
+  background-color: var(--color-bg-page);
+}
+
+.history-item:hover .history-actions {
+  opacity: 1;
+}
+
+.history-item--pinned {
+  background-color: #fef3c7;
+}
+
+.history-item--pinned:hover {
+  background-color: #fde68a;
+}
+
+.history-item--selected {
+  background-color: var(--color-primary-light) !important;
+}
+
+.history-item__content {
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
+  padding-right: 60px;
+}
+
+.history-item__actions {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  background: inherit;
+  padding-left: 8px;
+}
+
+.history-empty {
+  padding: 32px 0;
+  text-align: center;
+}
+
+.history-empty p {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════
+   AI Recommend Chips (推荐问题)
+   ═══════════════════════════════════════════════════════ */
+
+.ai-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.ai-chip:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.ai-chip .ai-chip__icon {
+  color: var(--color-primary);
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.ai-chip:hover .ai-chip__icon {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Skeleton Loading
+   ═══════════════════════════════════════════════════════ */
+
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-line {
+  height: 14px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+}
+
+.skeleton-line:last-child {
+  width: 60%;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Glow Effects
+   ═══════════════════════════════════════════════════════ */
+
+.glow-primary {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(59, 130, 246, 0.05);
+}
+
+.glow-success {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), 0 0 40px rgba(16, 185, 129, 0.05);
 }

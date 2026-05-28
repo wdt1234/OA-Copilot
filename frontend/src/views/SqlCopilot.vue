@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Star, StarFilled, Edit, Close, Delete } from '@element-plus/icons-vue'
+import { Star, StarFilled, Edit, Close, Delete, Document, Promotion } from '@element-plus/icons-vue'
 import axios from 'axios'
 
 // ── 状态 ──
@@ -13,6 +13,44 @@ const selectedFormCode = ref('')
 const availableForms = ref([])
 const selectedIds = ref([])
 const selectMode = ref(false)
+
+// ── 系统表状态 ──
+
+const systemTablesCount = ref(7)
+
+// ── 推荐问题 ──
+
+const recommendedQuestions = [
+  '按人员+月份统计表单数量',
+  '按部门+年份统计表单数量',
+  '按流程标题查审批记录',
+  '查我发起的流程',
+  '查待我审批的流程',
+]
+
+// ── 快捷示例 ──
+
+const allQuickExamples = [
+  '统计采购申请数量（按人员 + 月份）',
+  '统计采购申请数量（按部门 + 年份）',
+  '按流程标题查审批记录',
+  '查我发起的流程',
+  '查待我审批的采购申请',
+  '查询挂账申请表本月数据',
+  '统计各部门请假天数',
+  '查询运输通知单接口数据',
+]
+
+const quickExamples = ref([])
+
+function shuffleExamples() {
+  const shuffled = [...allQuickExamples].sort(() => Math.random() - 0.5)
+  quickExamples.value = shuffled.slice(0, 5)
+}
+
+function useQuickExample(text) {
+  prompt.value = text
+}
 
 // ── 快捷模板 ──
 
@@ -65,9 +103,7 @@ async function editTemplate(index) {
     quickTemplates.value[index] = value.trim()
     saveTemplates()
     ElMessage.success('模板已更新')
-  } catch (e) {
-    // 取消
-  }
+  } catch (e) {}
 }
 
 async function addTemplate() {
@@ -81,9 +117,7 @@ async function addTemplate() {
     quickTemplates.value.push(value.trim())
     saveTemplates()
     ElMessage.success('模板已添加')
-  } catch (e) {
-    // 取消
-  }
+  } catch (e) {}
 }
 
 function resetTemplates() {
@@ -98,7 +132,7 @@ function setAsDefault() {
   ElMessage.success('已将当前模板设为默认值')
 }
 
-// ── 表单数据字典（模糊搜索） ──
+// ── 表单数据字典 ──
 
 async function loadAvailableForms() {
   try {
@@ -130,6 +164,12 @@ function onFormChange(formCode) {
 
 const history = ref([])
 
+function getFormName(formCode) {
+  if (!formCode) return ''
+  const form = availableForms.value.find(f => f.formCode === formCode)
+  return form ? form.formName : formCode
+}
+
 async function loadHistory() {
   try {
     const { data } = await axios.get('/api/sql/history', { params: { limit: 20 } })
@@ -137,6 +177,8 @@ async function loadHistory() {
       id: item.id,
       prompt: item.prompt,
       sql: item.sqlResult,
+      formCode: item.formCode,
+      formName: getFormName(item.formCode),
       isPinned: item.pinned,
       time: formatTime(item.createTime)
     }))
@@ -147,12 +189,24 @@ async function loadHistory() {
 
 function formatTime(timeStr) {
   if (!timeStr) return ''
-  // "2026-05-13T10:32:00" -> "10:32"
   const parts = timeStr.split('T')
   if (parts.length === 2) {
     return parts[1].substring(0, 5)
   }
   return timeStr
+}
+
+function timeAgo(timeStr) {
+  if (!timeStr) return ''
+  const now = new Date()
+  const [h, m] = timeStr.split(':').map(Number)
+  const created = new Date(now)
+  created.setHours(h, m, 0, 0)
+  const diff = Math.floor((now - created) / 60000)
+  if (diff < 1) return '刚刚'
+  if (diff < 60) return `${diff}分钟前`
+  if (diff < 1440) return `${Math.floor(diff / 60)}小时前`
+  return `${Math.floor(diff / 1440)}天前`
 }
 
 async function togglePin(item) {
@@ -167,28 +221,23 @@ async function togglePin(item) {
 
 async function deleteHistory(item) {
   try {
-    await ElMessageBox.confirm(
-      '确定删除该记录？',
-      '确认删除',
-      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
-    )
+    await ElMessageBox.confirm('确定删除该记录？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
     await axios.delete(`/api/sql/history/${item.id}`)
     await loadHistory()
     ElMessage.success('已删除')
   } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error('删除失败')
-    }
+    if (e !== 'cancel') ElMessage.error('删除失败')
   }
 }
 
 function toggleSelect(id) {
   const idx = selectedIds.value.indexOf(id)
-  if (idx >= 0) {
-    selectedIds.value.splice(idx, 1)
-  } else {
-    selectedIds.value.push(id)
-  }
+  if (idx >= 0) selectedIds.value.splice(idx, 1)
+  else selectedIds.value.push(id)
 }
 
 function toggleSelectAll() {
@@ -212,11 +261,43 @@ async function batchDelete() {
     await loadHistory()
     ElMessage.success('批量删除完成')
   } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error('批量删除失败')
-    }
+    if (e !== 'cancel') ElMessage.error('批量删除失败')
   }
 }
+
+// ── SQL 语法高亮 ──
+
+function highlightSql(sql) {
+  if (!sql) return ''
+  let result = sql
+  // 关键字
+  const keywords = ['SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'JOIN', 'LEFT', 'RIGHT',
+    'INNER', 'ON', 'AS', 'IN', 'NOT', 'NULL', 'IS', 'LIKE', 'BETWEEN', 'EXISTS',
+    'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'DISTINCT', 'GROUP', 'BY', 'ORDER',
+    'ASC', 'DESC', 'HAVING', 'UNION', 'ALL', 'INSERT', 'INTO', 'VALUES',
+    'UPDATE', 'SET', 'DELETE', 'CREATE', 'TABLE', 'DROP', 'ALTER',
+    'CASE', 'WHEN', 'THEN', 'ELSE', 'END', 'TO_CHAR', 'TO_DATE', 'NVL',
+    'DECODE', 'SUBSTR', 'TRIM', 'UPPER', 'LOWER', 'LENGTH', 'CONNECT', 'WITH']
+  // 先转义 HTML
+  result = result.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  // 单引号字符串
+  result = result.replace(/'([^']*)'/g, '<span class="sql-str">\'$1\'</span>')
+  // 数字
+  result = result.replace(/\b(\d+)\b/g, '<span class="sql-num">$1</span>')
+  // 关键字
+  keywords.forEach(kw => {
+    const regex = new RegExp(`\\b(${kw})\\b`, 'gi')
+    result = result.replace(regex, '<span class="sql-kw">$1</span>')
+  })
+  // 注释
+  result = result.replace(/(--.*)/g, '<span class="sql-comment">$1</span>')
+  return result
+}
+
+const sqlLines = computed(() => {
+  if (!sqlOutput.value) return []
+  return sqlOutput.value.split('\n')
+})
 
 // ── 生成逻辑 ──
 
@@ -225,10 +306,8 @@ async function generate() {
     ElMessage.warning('请输入查询需求描述')
     return
   }
-
   generating.value = true
   sqlOutput.value = ''
-
   try {
     const { data } = await axios.post('/api/sql/generate', {
       prompt: prompt.value,
@@ -239,7 +318,6 @@ async function generate() {
       return
     }
     sqlOutput.value = data.sql
-    // 自动刷新历史列表
     await loadHistory()
   } catch (e) {
     ElMessage.error('生成失败，请检查后端服务是否启动')
@@ -252,7 +330,7 @@ async function generate() {
 function copySql() {
   if (!sqlOutput.value) return
   navigator.clipboard.writeText(sqlOutput.value)
-  ElMessage.success('SQL 已复制到剪贴板')
+  ElMessage.success('已复制到剪贴板')
 }
 
 function loadFromHistory(item) {
@@ -265,220 +343,354 @@ function clearAll() {
   sqlOutput.value = ''
 }
 
+function handleRecommendClick(q) {
+  prompt.value = q
+}
+
 // ── 初始化 ──
 
-onMounted(() => {
+onMounted(async () => {
+  await loadAvailableForms()
   loadHistory()
-  loadAvailableForms()
   loadTemplates()
+  shuffleExamples()
 })
 </script>
 
 <template>
   <div class="sql-copilot">
-    <el-row :gutter="16">
-      <!-- 左侧：主区域 -->
-      <el-col :xs="24" :lg="17">
-        <!-- 输入区 -->
-        <el-card shadow="never">
-          <template #header>
-            <span class="card-title">SQL 生成</span>
-          </template>
-
-          <div class="templates">
-            <div class="templates-header">
-              <span class="templates-label">快捷模板：</span>
-              <div class="templates-actions">
-                <el-button size="small" text type="primary" @click="addTemplate">新增</el-button>
-                <el-button size="small" text type="success" @click="setAsDefault">设为默认</el-button>
-                <el-button size="small" text type="info" @click="resetTemplates">恢复默认</el-button>
+    <el-row :gutter="20" class="sql-copilot__row">
+      <!-- ═══════════════════════════════════════════════
+           左侧：输入区
+           ═══════════════════════════════════════════════ -->
+      <el-col :xs="24" :lg="10" :xl="9">
+        <div class="panel panel--input animate-fade-in-up">
+          <!-- 标题区 -->
+          <div class="panel__header">
+            <div class="panel__title">
+              <div class="panel__title-icon panel__title-icon--ai">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="panel__title-text">智能生成 SQL</h2>
               </div>
             </div>
-            <div class="templates-list">
-              <div
-                v-for="(t, idx) in quickTemplates"
-                :key="idx"
-                class="template-item"
-              >
-                <el-tag
-                  size="small"
-                  class="template-tag"
-                  @click="useTemplate(t)"
-                >{{ t }}</el-tag>
-                <el-button
-                  size="small"
-                  text
-                  type="primary"
-                  class="template-edit-btn"
-                  @click.stop="editTemplate(idx)"
-                >
-                  <el-icon><Edit /></el-icon>
-                </el-button>
-                <el-button
-                  size="small"
-                  text
-                  type="danger"
-                  class="template-delete-btn"
-                  @click.stop="removeTemplate(idx)"
-                >
-                  <el-icon><Close /></el-icon>
-                </el-button>
-              </div>
+            <div class="panel__ai-badge">
+              <span class="panel__ai-badge-dot"></span>
+              {{ systemTablesCount }} 张系统表已就绪
             </div>
           </div>
 
-          <div class="form-select">
-            <span class="form-select-label">数据字典：</span>
-            <el-select
-              v-model="selectedFormCode"
-              placeholder="输入关键词搜索表单（可选）"
-              clearable
-              filterable
-              remote
-              :remote-method="onFormSearch"
-              @change="onFormChange"
-              size="default"
-              style="width: 320px"
-            >
-              <el-option
-                v-for="form in availableForms"
-                :key="form.formCode"
-                :label="form.formName + ' (' + form.tableName + ')'"
-                :value="form.formCode"
+          <!-- 推荐问题 -->
+          <div class="recommend-section">
+            <div class="recommend-header">
+              <span class="recommend-label">推荐问题</span>
+              <button class="recommend-clear" @click="clearAll">
+                <el-icon :size="14"><Delete /></el-icon>
+                清空
+              </button>
+            </div>
+            <div class="recommend-chips">
+              <button
+                v-for="(q, idx) in recommendedQuestions"
+                :key="q"
+                class="ai-chip"
+                @click="handleRecommendClick(q)"
+              >
+                {{ q }}
+              </button>
+            </div>
+          </div>
+
+          <!-- 输入区 -->
+          <div class="input-area">
+            <div class="input-wrapper">
+              <el-input
+                v-model="prompt"
+                type="textarea"
+                :rows="4"
+                :autosize="{ minRows: 3, maxRows: 8 }"
+                placeholder="请输入您的问题，比如：查王得童5月份采购申请数量"
+                class="prompt-textarea"
+                resize="none"
               />
-            </el-select>
-            <span class="form-select-hint">输入关键词模糊搜索，如"采购"、"付款"</span>
-          </div>
-
-          <el-input
-            v-model="prompt"
-            type="textarea"
-            :rows="4"
-            placeholder="描述你需要的 SQL 查询，例如：查询 formmain_1001 中本月所有请假单"
-            class="prompt-input"
-          />
-
-          <div class="actions">
-            <el-button
-              type="primary"
-              :loading="generating"
-              @click="generate"
-            >
-              <el-icon v-if="!generating"><Promotion /></el-icon>
-              {{ generating ? '生成中...' : '生成 SQL' }}
-            </el-button>
-            <el-button @click="clearAll">清空</el-button>
-          </div>
-        </el-card>
-
-        <!-- 输出区 -->
-        <el-card shadow="never" class="output-card">
-          <template #header>
-            <div class="output-header">
-              <span class="card-title">生成结果</span>
-              <el-button
-                v-if="sqlOutput"
-                size="small"
-                type="primary"
-                plain
-                @click="copySql"
-              >
-                <el-icon><CopyDocument /></el-icon>
-                复制
-              </el-button>
+              <div class="input-footer">
+                <span class="input-count" :class="{ 'input-count--warn': prompt.length > 450 }">
+                  {{ prompt.length }} / 500
+                </span>
+              </div>
             </div>
-          </template>
 
-          <div v-if="sqlOutput" class="sql-output">
-            <pre><code>{{ sqlOutput }}</code></pre>
+            <!-- 操作栏 -->
+            <div class="input-actions">
+              <el-select
+                v-model="selectedFormCode"
+                placeholder="选择表单（可选）"
+                clearable
+                filterable
+                remote
+                :remote-method="onFormSearch"
+                @change="onFormChange"
+                class="form-select"
+                size="large"
+              >
+                <template #prefix>
+                  <el-icon><Document /></el-icon>
+                </template>
+                <el-option
+                  v-for="form in availableForms"
+                  :key="form.formCode"
+                  :label="form.formName + ' (' + form.tableName + ')'"
+                  :value="form.formCode"
+                />
+              </el-select>
+
+              <div class="input-actions__right">
+                <el-button
+                  size="large"
+                  class="btn-clear"
+                  @click="clearAll"
+                >
+                  <el-icon><Delete /></el-icon>
+                  清空
+                </el-button>
+                <el-button
+                  type="primary"
+                  size="large"
+                  :loading="generating"
+                  @click="generate"
+                  class="btn-generate"
+                >
+                  <template #loading>
+                    <div class="btn-loading">
+                      <span class="btn-loading__dot"></span>
+                      <span class="btn-loading__dot"></span>
+                      <span class="btn-loading__dot"></span>
+                    </div>
+                  </template>
+                  <template v-if="!generating">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="margin-right:6px">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    生成 SQL
+                  </template>
+                  <template v-else>生成中...</template>
+                </el-button>
+              </div>
+            </div>
           </div>
-          <el-empty v-else description="输入需求后点击「生成 SQL」" :image-size="80" />
-        </el-card>
+        </div>
       </el-col>
 
-      <!-- 右侧：历史记录 -->
-      <el-col :xs="24" :lg="7">
-        <el-card shadow="never" class="history-card">
-          <template #header>
-            <div class="history-header">
-              <span class="card-title">历史记录</span>
-              <div class="history-header-actions">
-                <el-button
-                  v-if="history.length > 0 && !selectMode"
-                  size="small"
-                  text
-                  @click="selectMode = true"
-                >
-                  选择
-                </el-button>
-                <template v-if="selectMode">
-                  <el-button size="small" text @click="toggleSelectAll">
+      <!-- ═══════════════════════════════════════════════
+           中间：SQL 结果
+           ═══════════════════════════════════════════════ -->
+      <el-col :xs="24" :lg="14" :xl="15">
+        <div class="panel panel--output animate-fade-in-up" style="animation-delay: 0.08s">
+          <!-- 结果头部 -->
+          <div class="panel__header">
+            <div class="panel__title">
+              <div class="panel__title-icon panel__title-icon--result">
+                <el-icon :size="18"><Document /></el-icon>
+              </div>
+              <div>
+                <h2 class="panel__title-text">生成结果</h2>
+              </div>
+              <el-tag v-if="sqlOutput" type="info" size="small" effect="plain" class="result-tag">SQL</el-tag>
+            </div>
+            <div v-if="sqlOutput" class="result-actions">
+              <button class="result-btn" @click="copySql" title="复制">
+                <el-icon :size="15"><CopyDocument /></el-icon>
+                复制
+              </button>
+            </div>
+          </div>
+
+          <!-- SQL 代码区域 -->
+          <div class="code-editor">
+            <!-- 生成中 skeleton -->
+            <template v-if="generating">
+              <div class="code-editor__header">
+                <div class="code-editor__dots">
+                  <span></span><span></span><span></span>
+                </div>
+                <span class="code-editor__filename">query.sql</span>
+                <div class="code-editor__toolbar-right">
+                  <span class="code-editor__ai-status">
+                    <span class="code-editor__ai-spinner"></span>
+                    AI 生成中...
+                  </span>
+                </div>
+              </div>
+              <div class="code-editor__body">
+                <div class="code-editor__skeleton">
+                  <div class="skeleton skeleton-line" style="width: 30%"></div>
+                  <div class="skeleton skeleton-line" style="width: 80%"></div>
+                  <div class="skeleton skeleton-line" style="width: 65%"></div>
+                  <div class="skeleton skeleton-line" style="width: 90%"></div>
+                  <div class="skeleton skeleton-line" style="width: 50%"></div>
+                  <div class="skeleton skeleton-line" style="width: 75%"></div>
+                  <div class="skeleton skeleton-line" style="width: 40%"></div>
+                </div>
+              </div>
+              <div class="code-editor__footer">
+                <div class="code-editor__status code-editor__status--loading">
+                  <span class="code-editor__ai-spinner"></span>
+                  正在生成 SQL，请稍候...
+                </div>
+              </div>
+            </template>
+
+            <!-- 生成完成 -->
+            <template v-else-if="sqlOutput">
+              <div class="code-editor__header">
+                <div class="code-editor__dots">
+                  <span></span><span></span><span></span>
+                </div>
+                <span class="code-editor__filename">query.sql</span>
+                <div class="code-editor__toolbar-right">
+                  <el-tag size="small" type="info" effect="plain" class="code-editor__lang-tag">SQL</el-tag>
+                  <el-tag size="small" type="success" effect="plain" class="code-editor__lang-tag">{{ sqlLines.length }} 行</el-tag>
+                </div>
+              </div>
+              <div class="code-editor__body">
+                <div class="code-editor__lines">
+                  <span v-for="(_, i) in sqlLines" :key="i" class="code-editor__line-num">{{ i + 1 }}</span>
+                </div>
+                <pre class="code-editor__code"><code v-html="highlightSql(sqlOutput)"></code></pre>
+              </div>
+              <div class="code-editor__footer">
+                <div class="code-editor__status">
+                  <span class="code-editor__status-dot"></span>
+                  SQL 生成成功！共 {{ sqlLines.length }} 行
+                </div>
+              </div>
+            </template>
+
+            <!-- 空状态 -->
+            <template v-else>
+              <div class="code-editor__empty">
+                <div class="code-editor__empty-icon">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <p class="code-editor__empty-text">描述你的查询需求</p>
+                <p class="code-editor__empty-hint">AI 将基于数据字典自动生成 Oracle SQL</p>
+              </div>
+            </template>
+          </div>
+        </div>
+      </el-col>
+
+      <!-- ═══════════════════════════════════════════════
+           右侧：历史记录 + 快捷示例
+           ═══════════════════════════════════════════════ -->
+      <el-col :xs="24" :lg="24" :xl="0" class="right-col">
+        <div class="panel panel--side animate-fade-in-up" style="animation-delay: 0.16s">
+          <!-- 历史记录 -->
+          <div class="side-section">
+            <div class="side-section__header">
+              <h3 class="side-section__title">
+                <el-icon :size="16"><Clock /></el-icon>
+                历史记录
+              </h3>
+              <div class="side-section__actions">
+                <template v-if="!selectMode">
+                  <button v-if="history.length > 0" class="side-action-btn" @click="selectMode = true">选择</button>
+                </template>
+                <template v-else>
+                  <button class="side-action-btn" @click="toggleSelectAll">
                     {{ selectedIds.length === history.length ? '取消全选' : '全选' }}
-                  </el-button>
-                  <el-button
-                    v-if="selectedIds.length > 0"
-                    type="danger"
-                    size="small"
-                    text
-                    @click="batchDelete"
-                  >
+                  </button>
+                  <button v-if="selectedIds.length > 0" class="side-action-btn side-action-btn--danger" @click="batchDelete">
                     删除 ({{ selectedIds.length }})
-                  </el-button>
-                  <el-button size="small" text @click="selectMode = false; selectedIds = []">取消</el-button>
+                  </button>
+                  <button class="side-action-btn" @click="selectMode = false; selectedIds = []">取消</button>
                 </template>
               </div>
             </div>
-          </template>
 
-          <div v-if="history.length === 0" class="history-empty">
-            <el-empty description="暂无记录" :image-size="60" />
-          </div>
+            <div v-if="history.length === 0" class="side-empty">
+              <p>暂无历史记录</p>
+            </div>
 
-          <div v-else class="history-list">
-            <div
-              v-for="item in history"
-              :key="item.id"
-              class="history-item"
-              :class="{ 'history-item-pinned': item.isPinned, 'history-item-selected': selectedIds.includes(item.id) }"
-            >
-              <el-checkbox
-                v-if="selectMode"
-                :model-value="selectedIds.includes(item.id)"
-                @change="toggleSelect(item.id)"
-                @click.stop
-                class="history-checkbox"
-              />
-              <el-tooltip :content="item.prompt" placement="left" :show-after="300">
-                <div class="history-content" @click="loadFromHistory(item)">
-                  <div class="history-prompt">
-                    <el-icon v-if="item.isPinned" class="pin-icon"><StarFilled /></el-icon>
-                    {{ item.prompt }}
+            <div v-else class="history-list">
+              <div
+                v-for="item in history"
+                :key="item.id"
+                class="history-item"
+                :class="{
+                  'history-item--pinned': item.isPinned,
+                  'history-item--selected': selectedIds.includes(item.id)
+                }"
+              >
+                <input
+                  v-if="selectMode"
+                  type="checkbox"
+                  class="history-checkbox"
+                  :checked="selectedIds.includes(item.id)"
+                  @change="toggleSelect(item.id)"
+                  @click.stop
+                />
+                <div class="history-item__content" @click="loadFromHistory(item)">
+                  <div class="history-item__icon">
+                    <el-icon :size="14"><Document /></el-icon>
                   </div>
-                  <div class="history-time">{{ item.time }}</div>
+                  <div class="history-item__info">
+                    <p class="history-item__prompt">{{ item.prompt }}</p>
+                    <span class="history-item__time">{{ timeAgo(item.time) }}</span>
+                  </div>
                 </div>
-              </el-tooltip>
-              <div v-if="!selectMode" class="history-actions">
-                <el-button
-                  :type="item.isPinned ? 'warning' : 'info'"
-                  size="small"
-                  text
-                  @click.stop="togglePin(item)"
-                  :title="item.isPinned ? '取消置顶' : '置顶'"
-                >
-                  <el-icon><StarFilled v-if="item.isPinned" /><Star v-else /></el-icon>
-                </el-button>
-                <el-button
-                  type="danger"
-                  size="small"
-                  text
-                  @click.stop="deleteHistory(item)"
-                >
-                  <el-icon><Delete /></el-icon>
-                </el-button>
+                <div v-if="!selectMode" class="history-item__actions">
+                  <button
+                    class="history-action-btn"
+                    :class="{ 'history-action-btn--pinned': item.isPinned }"
+                    @click.stop="togglePin(item)"
+                    :title="item.isPinned ? '取消置顶' : '置顶'"
+                  >
+                    <el-icon :size="14"><StarFilled v-if="item.isPinned" /><Star v-else /></el-icon>
+                  </button>
+                  <button class="history-action-btn history-action-btn--danger" @click.stop="deleteHistory(item)">
+                    <el-icon :size="14"><Delete /></el-icon>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </el-card>
+
+          <!-- 快捷示例 -->
+          <div class="side-section">
+            <div class="side-section__header">
+              <h3 class="side-section__title">
+                <el-icon :size="16"><Promotion /></el-icon>
+                快捷示例
+              </h3>
+              <button class="side-action-btn" @click="shuffleExamples">
+                <el-icon :size="14"><Refresh /></el-icon>
+                换一批
+              </button>
+            </div>
+
+            <div class="example-list">
+              <div
+                v-for="(example, idx) in quickExamples"
+                :key="idx"
+                class="example-item"
+                @click="useQuickExample(example)"
+              >
+                <div class="example-item__icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <span class="example-item__text">{{ example }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -486,258 +698,869 @@ onMounted(() => {
 
 <style scoped>
 .sql-copilot {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.card-title {
-  font-size: 15px;
-  font-weight: 500;
-  color: #262626;
-}
-
-/* 快捷模板 */
-.templates {
-  margin-bottom: 12px;
-}
-
-.templates-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.templates-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.templates-label {
-  font-size: 13px;
-  color: #8c8c8c;
-  flex-shrink: 0;
-}
-
-.templates-list {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
-.template-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-}
-
-.template-tag {
-  cursor: pointer;
-  font-weight: 400;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.template-tag:hover {
-  color: #409eff;
-  border-color: #409eff;
-}
-
-.template-edit-btn,
-.template-delete-btn {
-  padding: 2px !important;
-  height: auto !important;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.template-item:hover .template-edit-btn,
-.template-item:hover .template-delete-btn {
-  opacity: 1;
-}
-
-.template-edit-btn .el-icon,
-.template-delete-btn .el-icon {
-  font-size: 12px;
-}
-
-/* 表单选择 */
-.form-select {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.form-select-label {
-  font-size: 13px;
-  color: #8c8c8c;
-  flex-shrink: 0;
-}
-
-.form-select-hint {
-  font-size: 12px;
-  color: #bfbfbf;
-}
-
-/* 输入 */
-.prompt-input {
-  margin-bottom: 12px;
-}
-
-:deep(.el-textarea__inner) {
-  font-size: 14px;
-  font-family: 'Consolas', 'Monaco', monospace;
-}
-
-/* 按钮 */
-.actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* 输出区 */
-.output-card {
-  margin-top: 16px;
-}
-
-.output-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sql-output {
-  background: #1e1e1e;
-  border-radius: 6px;
-  padding: 16px;
-  overflow-x: auto;
-}
-
-.sql-output pre {
-  margin: 0;
-}
-
-.sql-output code {
-  color: #d4d4d4;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  white-space: pre;
-}
-
-/* 历史记录 */
-.history-card {
   height: 100%;
 }
 
-.history-header {
+.sql-copilot__row {
+  height: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Panel Base
+   ═══════════════════════════════════════════════════════ */
+
+.panel {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
 }
 
-.history-header-actions {
+.panel__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel__title-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.panel__title-icon--result {
+  background: #f0fdf4;
+  color: var(--color-success);
+}
+
+.panel__title-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.panel__title-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.panel__badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-success);
+  font-weight: 500;
+  background: #f0fdf4;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.panel__badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+}
+
+/* AI Header */
+.panel__header--ai {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.04), rgba(139, 92, 246, 0.03));
+}
+
+.panel__title-icon--ai {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #fff;
+}
+
+.panel__ai-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-success);
+  background: #f0fdf4;
+  border: 1px solid #d1fae5;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.panel__ai-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Input Panel
+   ═══════════════════════════════════════════════════════ */
+
+.panel--input {
+  height: 100%;
+}
+
+/* Recommend Section */
+.recommend-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.recommend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.recommend-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.recommend-clear {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.recommend-clear:hover {
+  color: var(--color-danger);
+  background: #fef2f2;
+}
+
+.recommend-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Input Area */
+.input-area {
+  padding: 16px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.prompt-textarea {
+  flex: 1;
+}
+
+.prompt-textarea :deep(.el-textarea__inner) {
+  border-radius: var(--radius-md) !important;
+  border: 1.5px solid var(--color-border) !important;
+  font-size: 14px;
+  padding: 14px 16px;
+  line-height: 1.7;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast) !important;
+}
+
+.prompt-textarea :deep(.el-textarea__inner:focus) {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.input-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 0 0;
+}
+
+.input-count {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.input-count--warn {
+  color: var(--color-warning);
+}
+
+/* Actions */
+.input-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.form-select {
+  flex: 1;
+}
+
+.form-select :deep(.el-select__wrapper) {
+  border-radius: var(--radius-md) !important;
+  border: 1.5px solid var(--color-border) !important;
+  box-shadow: none !important;
+}
+
+.form-select :deep(.el-select__wrapper:hover) {
+  border-color: var(--color-primary) !important;
+}
+
+.form-select :deep(.el-select__wrapper.is-focused) {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.input-actions__right {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-clear {
+  border-radius: var(--radius-md) !important;
+  font-weight: 500 !important;
+}
+
+.btn-generate {
+  border-radius: var(--radius-md) !important;
+  font-weight: 600 !important;
+  padding: 12px 28px !important;
+  background: var(--color-primary) !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.btn-generate:hover {
+  background: var(--color-primary-hover) !important;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+}
+
+.btn-generate:active {
+  transform: translateY(0);
+}
+
+/* Loading dots */
+.btn-loading {
   display: flex;
   gap: 4px;
   align-items: center;
 }
 
-.history-checkbox {
-  margin-right: 8px;
+.btn-loading__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+
+.btn-loading__dot:nth-child(2) { animation-delay: 0.2s; }
+.btn-loading__dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotPulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Output Panel (Code Editor)
+   ═══════════════════════════════════════════════════════ */
+
+.panel--output {
+  height: 100%;
+}
+
+.result-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-tag {
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-weight: 600;
+}
+
+.result-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.result-btn:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+/* Code Editor */
+.code-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fafbfc;
+  overflow: hidden;
+  min-height: 320px;
+}
+
+.code-editor__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #f1f3f5;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.code-editor__dots {
+  display: flex;
+  gap: 6px;
+}
+
+.code-editor__dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.code-editor__dots span:nth-child(1) { background: #ff5f57; }
+.code-editor__dots span:nth-child(2) { background: #febc2e; }
+.code-editor__dots span:nth-child(3) { background: #28c840; }
+
+.code-editor__filename {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.code-editor__actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.code-editor__btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.code-editor__btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-card);
+  border-color: var(--color-border);
+}
+
+.code-editor__body {
+  flex: 1;
+  display: flex;
+  overflow: auto;
+  padding: 16px 0;
+}
+
+.code-editor__lines {
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px 0 16px;
+  border-right: 1px solid var(--color-border-light);
+  user-select: none;
   flex-shrink: 0;
 }
 
-.history-item-selected {
-  background-color: #e6f7ff !important;
+.code-editor__line-num {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-family: 'SF Mono', 'Consolas', monospace;
+  line-height: 22px;
+  text-align: right;
+  min-width: 28px;
 }
 
+.code-editor__code {
+  flex: 1;
+  margin: 0;
+  padding: 0 16px;
+  overflow-x: auto;
+}
+
+.code-editor__code code {
+  font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 22px;
+  color: var(--color-text-primary);
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* SQL Syntax Colors */
+:deep(.sql-kw) { color: #3b82f6; font-weight: 600; }
+:deep(.sql-str) { color: #10b981; }
+:deep(.sql-num) { color: #f59e0b; }
+:deep(.sql-comment) { color: #94a3b8; font-style: italic; }
+
+/* Empty State */
+.code-editor__empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+}
+
+.code-editor__empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: var(--color-bg-page);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.code-editor__empty-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.code-editor__empty-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Right Side Panel
+   ═══════════════════════════════════════════════════════ */
+
+.right-col {
+  display: flex;
+}
+
+.panel--side {
+  height: 100%;
+  overflow-y: auto;
+  flex-direction: column;
+}
+
+/* Side Section */
+.side-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.side-section:last-child {
+  border-bottom: none;
+}
+
+.side-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.side-section__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.side-section__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.side-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  font-weight: 500;
+}
+
+.side-action-btn:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.side-action-btn--danger:hover {
+  color: var(--color-danger);
+  background: #fef2f2;
+}
+
+.side-empty {
+  padding: 24px 0;
+  text-align: center;
+}
+
+.side-empty p {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* History List */
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .history-item {
-  padding: 10px 12px;
-  border-radius: 4px;
-  transition: background-color 0.15s;
   display: flex;
   align-items: center;
-  position: relative;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  cursor: default;
 }
 
 .history-item:hover {
-  background-color: #f5f7fa;
+  background: var(--color-bg-page);
 }
 
-.history-item:hover .history-actions {
+.history-item--pinned {
+  background: #fef3c7;
+}
+
+.history-item--pinned:hover {
+  background: #fde68a;
+}
+
+.history-item--selected {
+  background: var(--color-primary-light) !important;
+}
+
+.history-checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.history-item__content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  min-width: 0;
+  padding-right: 4px;
+}
+
+.history-item__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--color-bg-page);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.history-item__info {
+  min-width: 0;
+  flex: 1;
+}
+
+.history-item__prompt {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.history-item__time {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.history-item__actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.history-item:hover .history-item__actions {
   opacity: 1;
 }
 
-.history-item-pinned {
-  background-color: #fffbe6;
-}
-
-.history-item-pinned:hover {
-  background-color: #fff7cc;
-}
-
-.history-content {
-  flex: 1;
+.history-action-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
   cursor: pointer;
-  min-width: 0;
-  padding-right: 60px;
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
 }
 
-.history-prompt {
+.history-action-btn:hover {
+  background: var(--color-bg-page);
+  color: var(--color-text-secondary);
+}
+
+.history-action-btn--pinned {
+  color: var(--color-warning);
+}
+
+.history-action-btn--danger:hover {
+  color: var(--color-danger);
+  background: #fef2f2;
+}
+
+/* Example List */
+.example-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.example-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.example-item:hover {
+  background: var(--color-bg-page);
+}
+
+.example-item__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.example-item__text {
+  flex: 1;
   font-size: 13px;
-  color: #262626;
-  line-height: 1.5;
+  color: var(--color-text-primary);
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.pin-icon {
-  color: #faad14;
-  margin-right: 4px;
-  font-size: 12px;
+/* ═══════════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════════ */
+
+@media (max-width: 1200px) {
+  .right-col {
+    display: none;
+  }
 }
 
-.history-time {
-  font-size: 12px;
-  color: #bfbfbf;
-  margin-top: 4px;
+@media (max-width: 768px) {
+  .panel__header {
+    padding: 14px 16px;
+  }
+
+  .input-area {
+    padding: 14px 16px;
+  }
+
+  .recommend-section {
+    padding: 14px 16px;
+  }
+
+  .input-actions {
+    flex-direction: column;
+  }
+
+  .form-select {
+    width: 100%;
+  }
+
+  .input-actions__right {
+    width: 100%;
+  }
+
+  .btn-generate {
+    flex: 1;
+  }
 }
 
-.history-actions {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+/* ═══════════════════════════════════════════════════════
+   Code Editor Enhancements
+   ═══════════════════════════════════════════════════════ */
+
+.code-editor__toolbar-right {
+  margin-left: auto;
   display: flex;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 0.15s;
-  background: inherit;
-  padding-left: 8px;
+  align-items: center;
+  gap: 8px;
 }
 
-.history-empty {
-  padding: 20px 0;
+.code-editor__lang-tag {
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-weight: 600;
+  font-size: 11px;
 }
 
-:deep(.el-card__header) {
-  padding: 14px 20px;
-  border-bottom: 1px solid #f0f0f0;
+.code-editor__ai-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-primary);
+  font-weight: 500;
 }
 
-:deep(.el-card__body) {
-  padding: 16px 20px;
+.code-editor__ai-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.code-editor__skeleton {
+  padding: 16px;
+  width: 100%;
+}
+
+.code-editor__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #f1f3f5;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.code-editor__footer-left,
+.code-editor__footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.code-editor__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-success);
+  font-weight: 500;
+}
+
+.code-editor__status--loading {
+  color: var(--color-primary);
+}
+
+.code-editor__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+}
+
+.code-editor__encoding {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.code-editor__ai-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-primary);
+  font-weight: 500;
+  opacity: 0.7;
 }
 </style>
