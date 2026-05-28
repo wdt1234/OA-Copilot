@@ -361,9 +361,10 @@ onMounted(async () => {
   <div class="sql-copilot">
     <el-row :gutter="20" class="sql-copilot__row">
       <!-- ═══════════════════════════════════════════════
-           左侧：输入区
+           中间：输入区 + 结果区
            ═══════════════════════════════════════════════ -->
-      <el-col :xs="24" :lg="10" :xl="9">
+      <el-col :xs="24" :lg="17">
+        <!-- 智能生成 SQL -->
         <div class="panel panel--input animate-fade-in-up">
           <!-- 标题区 -->
           <div class="panel__header">
@@ -482,12 +483,8 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-      </el-col>
 
-      <!-- ═══════════════════════════════════════════════
-           中间：SQL 结果
-           ═══════════════════════════════════════════════ -->
-      <el-col :xs="24" :lg="14" :xl="15">
+        <!-- 生成结果 -->
         <div class="panel panel--output animate-fade-in-up" style="animation-delay: 0.08s">
           <!-- 结果头部 -->
           <div class="panel__header">
@@ -586,11 +583,11 @@ onMounted(async () => {
       </el-col>
 
       <!-- ═══════════════════════════════════════════════
-           右侧：历史记录 + 快捷示例
+           右侧：历史记录 + 快捷模板
            ═══════════════════════════════════════════════ -->
-      <el-col :xs="24" :lg="24" :xl="0" class="right-col">
+      <el-col :xs="24" :lg="7">
+        <!-- 历史记录 -->
         <div class="panel panel--side animate-fade-in-up" style="animation-delay: 0.16s">
-          <!-- 历史记录 -->
           <div class="side-section">
             <div class="side-section__header">
               <h3 class="side-section__title">
@@ -660,33 +657,45 @@ onMounted(async () => {
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- 快捷示例 -->
+        <!-- 快捷模板 -->
+        <div class="panel panel--side animate-fade-in-up" style="animation-delay: 0.2s; margin-top: 16px">
           <div class="side-section">
             <div class="side-section__header">
               <h3 class="side-section__title">
-                <el-icon :size="16"><Promotion /></el-icon>
-                快捷示例
+                <el-icon :size="16"><Collection /></el-icon>
+                快捷模板
               </h3>
-              <button class="side-action-btn" @click="shuffleExamples">
-                <el-icon :size="14"><Refresh /></el-icon>
-                换一批
-              </button>
+              <div class="side-section__actions">
+                <button class="side-action-btn" @click="addTemplate">新增</button>
+                <button class="side-action-btn" @click="setAsDefault">设为默认</button>
+                <button class="side-action-btn" @click="resetTemplates">恢复</button>
+              </div>
             </div>
 
-            <div class="example-list">
+            <div class="template-list">
               <div
-                v-for="(example, idx) in quickExamples"
+                v-for="(t, idx) in quickTemplates"
                 :key="idx"
-                class="example-item"
-                @click="useQuickExample(example)"
+                class="template-item"
+                @click="useTemplate(t)"
               >
-                <div class="example-item__icon">
+                <div class="template-item__icon">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </div>
-                <span class="example-item__text">{{ example }}</span>
+                <span class="template-item__text">{{ t }}</span>
+                <div class="template-item__actions">
+                  <button class="template-action-btn" @click.stop="editTemplate(idx)" title="编辑">
+                    <el-icon :size="12"><Edit /></el-icon>
+                  </button>
+                  <button class="template-action-btn template-action-btn--danger" @click.stop="removeTemplate(idx)" title="删除">
+                    <el-icon :size="12"><Close /></el-icon>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -824,7 +833,7 @@ onMounted(async () => {
    ═══════════════════════════════════════════════════════ */
 
 .panel--input {
-  height: 100%;
+  margin-bottom: 16px;
 }
 
 /* Recommend Section */
@@ -874,13 +883,9 @@ onMounted(async () => {
 /* Input Area */
 .input-area {
   padding: 16px 20px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
 }
 
 .input-wrapper {
-  flex: 1;
   display: flex;
   flex-direction: column;
 }
@@ -1189,24 +1194,13 @@ onMounted(async () => {
    Right Side Panel
    ═══════════════════════════════════════════════════════ */
 
-.right-col {
-  display: flex;
-}
-
 .panel--side {
-  height: 100%;
   overflow-y: auto;
-  flex-direction: column;
 }
 
 /* Side Section */
 .side-section {
   padding: 16px;
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.side-section:last-child {
-  border-bottom: none;
 }
 
 .side-section__header {
@@ -1389,28 +1383,28 @@ onMounted(async () => {
   background: #fef2f2;
 }
 
-/* Example List */
-.example-list {
+/* Template List */
+.template-list {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.example-item {
+.template-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 10px 12px;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.example-item:hover {
+.template-item:hover {
   background: var(--color-bg-page);
 }
 
-.example-item__icon {
+.template-item__icon {
   width: 28px;
   height: 28px;
   border-radius: 8px;
@@ -1422,7 +1416,7 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.example-item__text {
+.template-item__text {
   flex: 1;
   font-size: 13px;
   color: var(--color-text-primary);
@@ -1430,6 +1424,42 @@ onMounted(async () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+
+.template-item__actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.template-item:hover .template-item__actions {
+  opacity: 1;
+}
+
+.template-action-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+}
+
+.template-action-btn:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.template-action-btn--danger:hover {
+  background: #fef2f2;
+  color: var(--color-danger);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1437,7 +1467,7 @@ onMounted(async () => {
    ═══════════════════════════════════════════════════════ */
 
 @media (max-width: 1200px) {
-  .right-col {
+  .sql-copilot__row > .el-col:last-child {
     display: none;
   }
 }
