@@ -384,27 +384,6 @@ onMounted(async () => {
             </div>
           </div>
 
-          <!-- 推荐问题 -->
-          <div class="recommend-section">
-            <div class="recommend-header">
-              <span class="recommend-label">推荐问题</span>
-              <button class="recommend-clear" @click="clearAll">
-                <el-icon :size="14"><Delete /></el-icon>
-                清空
-              </button>
-            </div>
-            <div class="recommend-chips">
-              <button
-                v-for="(q, idx) in recommendedQuestions"
-                :key="q"
-                class="ai-chip"
-                @click="handleRecommendClick(q)"
-              >
-                {{ q }}
-              </button>
-            </div>
-          </div>
-
           <!-- 输入区 -->
           <div class="input-area">
             <div class="input-wrapper">
@@ -583,7 +562,7 @@ onMounted(async () => {
       </el-col>
 
       <!-- ═══════════════════════════════════════════════
-           右侧：历史记录 + 快捷模板
+           右侧：历史记录 + 推荐问题 + 快捷模板
            ═══════════════════════════════════════════════ -->
       <el-col :xs="24" :lg="7">
         <!-- 历史记录 -->
@@ -638,7 +617,10 @@ onMounted(async () => {
                   </div>
                   <div class="history-item__info">
                     <p class="history-item__prompt">{{ item.prompt }}</p>
-                    <span class="history-item__time">{{ timeAgo(item.time) }}</span>
+                    <div class="history-item__meta">
+                      <span class="history-item__time">{{ timeAgo(item.time) }}</span>
+                      <span v-if="item.formName" class="history-item__form">{{ item.formName }}</span>
+                    </div>
                   </div>
                 </div>
                 <div v-if="!selectMode" class="history-item__actions">
@@ -659,8 +641,34 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- 快捷模板 -->
+        <!-- 推荐问题 -->
         <div class="panel panel--side animate-fade-in-up" style="animation-delay: 0.2s; margin-top: 16px">
+          <div class="side-section">
+            <div class="side-section__header">
+              <h3 class="side-section__title">
+                <el-icon :size="16"><Promotion /></el-icon>
+                推荐问题
+              </h3>
+              <button class="side-action-btn" @click="clearAll">
+                <el-icon :size="14"><Delete /></el-icon>
+                清空
+              </button>
+            </div>
+            <div class="recommend-chips">
+              <button
+                v-for="(q, idx) in recommendedQuestions"
+                :key="q"
+                class="ai-chip"
+                @click="handleRecommendClick(q)"
+              >
+                {{ q }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 快捷模板 -->
+        <div class="panel panel--side animate-fade-in-up" style="animation-delay: 0.24s; margin-top: 16px">
           <div class="side-section">
             <div class="side-section__header">
               <h3 class="side-section__title">
@@ -1339,9 +1347,24 @@ onMounted(async () => {
   line-height: 1.4;
 }
 
+.history-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
 .history-item__time {
   font-size: 11px;
   color: var(--color-text-muted);
+}
+
+.history-item__form {
+  font-size: 11px;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .history-item__actions {
