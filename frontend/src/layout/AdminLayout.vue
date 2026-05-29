@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 
@@ -23,6 +23,11 @@ async function loadAiStatus() {
     aiModel.value = '连接失败'
   }
 }
+
+// 路由变化时刷新AI状态（从系统设置页面切换过来时会更新）
+watch(() => route.path, () => {
+  loadAiStatus()
+})
 
 onMounted(() => {
   loadAiStatus()
@@ -48,6 +53,7 @@ const menuGroups = [
     items: [
       { path: '/data-dictionary', title: '系统知识库', icon: 'Notebook' },
       { path: '/prompt-manager', title: 'AI Prompt 管理', icon: 'Setting' },
+      { path: '/error-case-library', title: '错题库', icon: 'Warning' },
     ]
   },
   {
