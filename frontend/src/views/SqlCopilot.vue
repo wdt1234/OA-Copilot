@@ -970,34 +970,34 @@ onMounted(async () => {
 .quick-template-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 5px;
+  padding: 6px 12px;
   background: var(--color-primary-light);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 8px;
+  border: none;
+  border-radius: 20px;
   cursor: pointer;
   transition: all var(--transition-fast);
-  max-width: 220px;
+  max-width: 200px;
 }
 
 .quick-template-item:hover {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  background: #dbeafe;
+  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2);
 }
 
 .quick-template-item__icon {
   color: var(--color-primary);
   flex-shrink: 0;
+  opacity: 0.8;
 }
 
 .quick-template-item:hover .quick-template-item__icon {
-  color: #fff;
+  opacity: 1;
 }
 
 .quick-template-item__text {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--color-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1005,7 +1005,7 @@ onMounted(async () => {
 }
 
 .quick-template-item:hover .quick-template-item__text {
-  color: #fff;
+  color: #1d4ed8;
 }
 
 .quick-template-item__actions {
@@ -1020,8 +1020,8 @@ onMounted(async () => {
 }
 
 .quick-template-action-btn {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1030,17 +1030,21 @@ onMounted(async () => {
   border-radius: 4px;
   cursor: pointer;
   color: var(--color-primary);
+  opacity: 0.6;
   transition: all var(--transition-fast);
 }
 
+.quick-template-item:hover .quick-template-action-btn {
+  opacity: 1;
+}
+
 .quick-template-action-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  color: #fff;
+  background: rgba(59, 130, 246, 0.15);
 }
 
 .quick-template-action-btn--danger:hover {
-  background: rgba(239, 68, 68, 0.8);
-  color: #fff;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-danger);
 }
 
 /* Recommend Section */
