@@ -73,7 +73,7 @@ function useQuickExample(text) {
   prompt.value = text
 }
 
-// ── 快捷模板（云端同步） ──
+// ── 快捷模板（云端同步 + 本地迁移） ──
 
 const quickTemplates = ref([])
 
@@ -81,9 +81,50 @@ async function loadTemplates() {
   try {
     const { data } = await axios.get('/api/shortcut-templates/sql')
     quickTemplates.value = data.map(t => ({ id: t.id, content: t.content }))
+
+    // 如果数据库为空，检查 localStorage 是否有旧数据需要迁移
+    if (quickTemplates.value.length === 0) {
+      await migrateFromLocalStorage()
+    }
   } catch (e) {
     console.error('加载模板失败', e)
     quickTemplates.value = []
+  }
+}
+
+// 迁移 localStorage 中的旧模板到数据库
+async function migrateFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem('sql_copilot_quick_templates')
+    if (!saved) return
+
+    const oldTemplates = JSON.parse(saved)
+    if (!Array.isArray(oldTemplates) || oldTemplates.length === 0) return
+
+    console.log('发现 localStorage 旧模板，正在迁移到数据库...', oldTemplates)
+
+    // 逐个上传到数据库
+    for (const content of oldTemplates) {
+      if (typeof content === 'string' && content.trim()) {
+        await axios.post('/api/shortcut-templates', {
+          category: 'sql',
+          content: content.trim()
+        })
+      }
+    }
+
+    // 清除 localStorage 中的旧数据
+    localStorage.removeItem('sql_copilot_quick_templates')
+    localStorage.removeItem('sql_copilot_default_templates')
+
+    // 重新加载
+    const { data } = await axios.get('/api/shortcut-templates/sql')
+    quickTemplates.value = data.map(t => ({ id: t.id, content: t.content }))
+
+    console.log('迁移完成，共迁移', oldTemplates.length, '个模板')
+    ElMessage.success(`已从本地迁移 ${oldTemplates.length} 个模板到云端`)
+  } catch (e) {
+    console.error('迁移 localStorage 模板失败', e)
   }
 }
 
