@@ -29,6 +29,13 @@ public class AiConfigService {
     }
 
     /**
+     * 根据ID获取配置（包含真实 API Key）
+     */
+    public AiConfig getConfigById(Long id) {
+        return aiConfigMapper.findById(id);
+    }
+
+    /**
      * 获取当前激活的配置
      */
     public AiConfig getActiveConfig() {

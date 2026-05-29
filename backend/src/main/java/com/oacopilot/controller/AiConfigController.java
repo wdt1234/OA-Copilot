@@ -99,7 +99,23 @@ public class AiConfigController {
      */
     @PostMapping("/test")
     public Map<String, Object> testConnection(@RequestBody AiConfig config) {
-        log.info("测试连接 - endpoint: [{}], model: [{}]", config.getEndpoint(), config.getModel());
+        log.info("测试连接 - endpoint: [{}], model: [{}], hasApiKey: {}",
+                config.getEndpoint(), config.getModel(), config.getApiKey() != null && !config.getApiKey().isEmpty());
+
+        // 如果 apiKey 为空且有 id，从数据库读取
+        String apiKey = config.getApiKey();
+        if ((apiKey == null || apiKey.isEmpty()) && config.getId() != null) {
+            AiConfig dbConfig = aiConfigService.getConfigById(config.getId());
+            if (dbConfig != null) {
+                apiKey = dbConfig.getApiKey();
+                log.info("从数据库读取 API Key");
+            }
+        }
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            return Map.of("success", false, "message", "请输入 API Key");
+        }
+
         try {
             String requestBody = "{\"model\":\"" + config.getModel() +
                     "\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"max_tokens\":5}";
@@ -109,7 +125,7 @@ public class AiConfigController {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(config.getEndpoint()))
                     .header("Content-Type", "application/json; charset=utf-8")
-                    .header("Authorization", "Bearer " + config.getApiKey())
+                    .header("Authorization", "Bearer " + apiKey)
                     .timeout(Duration.ofSeconds(15))
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
                     .build();
