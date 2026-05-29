@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Search, Warning, Document, Connection, Key } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Warning, Plus, Edit, Delete, Star, StarFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
 
 // ── 状态 ──
@@ -11,13 +11,29 @@ const errorCases = ref([])
 const activeCategory = ref('all')
 const searchKeyword = ref('')
 
+// ── 新增/编辑弹窗 ──
+
+const showDialog = ref(false)
+const isEdit = ref(false)
+const formData = ref({
+  id: null,
+  category: 'sql',
+  title: '',
+  symptom: '',
+  cause: '',
+  solution: '',
+  exampleWrong: '',
+  exampleCorrect: '',
+  tags: ''
+})
+
 // ── 分类配置 ──
 
 const categories = [
-  { value: 'all', label: '全部', icon: Document },
-  { value: 'sql', label: 'SQL 错误', icon: Document },
-  { value: 'dee', label: 'DEE 错误', icon: Connection },
-  { value: 'token', label: 'Token 错误', icon: Key }
+  { value: 'all', label: '全部' },
+  { value: 'sql', label: 'SQL 错误' },
+  { value: 'dee', label: 'DEE 错误' },
+  { value: 'token', label: 'Token 错误' }
 ]
 
 // ── 加载数据 ──
@@ -43,7 +59,10 @@ async function searchCases() {
   loading.value = true
   try {
     const { data } = await axios.get('/api/error-cases/search', {
-      params: { keyword: searchKeyword.value }
+      params: {
+        category: activeCategory.value === 'all' ? '' : activeCategory.value,
+        keyword: searchKeyword.value
+      }
     })
     errorCases.value = data
   } catch (e) {
@@ -74,6 +93,97 @@ function getCategoryTag(category) {
   return map[category] || { label: category, type: 'info' }
 }
 
+// ── 新增 ──
+
+function handleAdd() {
+  isEdit.value = false
+  formData.value = {
+    id: null,
+    category: 'sql',
+    title: '',
+    symptom: '',
+    cause: '',
+    solution: '',
+    exampleWrong: '',
+    exampleCorrect: '',
+    tags: ''
+  }
+  showDialog.value = true
+}
+
+// ── 编辑 ──
+
+function handleEdit(row) {
+  isEdit.value = true
+  formData.value = {
+    id: row.id,
+    category: row.category,
+    title: row.title,
+    symptom: row.symptom || '',
+    cause: row.cause || '',
+    solution: row.solution || '',
+    exampleWrong: row.exampleWrong || '',
+    exampleCorrect: row.exampleCorrect || '',
+    tags: row.tags || ''
+  }
+  showDialog.value = true
+}
+
+// ── 保存 ──
+
+async function handleSave() {
+  if (!formData.value.title.trim()) {
+    ElMessage.warning('请输入错误标题')
+    return
+  }
+
+  try {
+    if (isEdit.value) {
+      await axios.put(`/api/error-cases/${formData.value.id}`, formData.value)
+      ElMessage.success('更新成功')
+    } else {
+      await axios.post('/api/error-cases', formData.value)
+      ElMessage.success('添加成功')
+    }
+    showDialog.value = false
+    loadErrorCases()
+  } catch (e) {
+    ElMessage.error('保存失败')
+  }
+}
+
+// ── 删除 ──
+
+async function handleDelete(row) {
+  try {
+    await ElMessageBox.confirm(`确定要删除"${row.title}"吗？`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    await axios.delete(`/api/error-cases/${row.id}`)
+    ElMessage.success('删除成功')
+    loadErrorCases()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+// ── 置顶 ──
+
+async function handleTogglePin(row) {
+  try {
+    const newPinned = row.isPinned === 1 ? 0 : 1
+    await axios.put(`/api/error-cases/${row.id}/pinned`, { isPinned: newPinned })
+    ElMessage.success(newPinned === 1 ? '已置顶' : '已取消置顶')
+    loadErrorCases()
+  } catch (e) {
+    ElMessage.error('操作失败')
+  }
+}
+
 // ── 初始化 ──
 
 onMounted(() => {
@@ -89,21 +199,26 @@ onMounted(() => {
         <el-icon :size="20"><Warning /></el-icon>
         <span>错题库</span>
       </div>
-      <div class="page-desc">常见错误案例与解决方案</div>
+      <div class="page-desc">记录真实遇到的错误案例和解决方案</div>
     </div>
 
-    <!-- 搜索和筛选 -->
-    <div class="filter-bar">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索错误案例..."
-        :prefix-icon="Search"
-        clearable
-        @keyup.enter="searchCases"
-        @clear="loadErrorCases"
-        class="search-input"
-      />
-      <el-button type="primary" @click="searchCases">搜索</el-button>
+    <!-- 操作栏 -->
+    <div class="action-bar">
+      <div class="filter-left">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索错误案例..."
+          :prefix-icon="Search"
+          clearable
+          @keyup.enter="searchCases"
+          @clear="loadErrorCases"
+          class="search-input"
+        />
+        <el-button @click="searchCases">搜索</el-button>
+      </div>
+      <el-button type="primary" :icon="Plus" @click="handleAdd">
+        新增错误案例
+      </el-button>
     </div>
 
     <!-- 分类标签 -->
@@ -115,7 +230,6 @@ onMounted(() => {
         :class="{ 'category-tab--active': activeCategory === cat.value }"
         @click="activeCategory = cat.value"
       >
-        <el-icon><component :is="cat.icon" /></el-icon>
         <span>{{ cat.label }}</span>
       </div>
     </div>
@@ -125,6 +239,7 @@ onMounted(() => {
       <div v-if="filteredCases.length === 0" class="empty-state">
         <el-icon :size="48"><Warning /></el-icon>
         <p>暂无错误案例</p>
+        <el-button type="primary" @click="handleAdd">添加第一个案例</el-button>
       </div>
 
       <div v-for="item in filteredCases" :key="item.id" class="case-card">
@@ -133,52 +248,114 @@ onMounted(() => {
             {{ getCategoryTag(item.category).label }}
           </el-tag>
           <h3 class="case-title">{{ item.title }}</h3>
+          <div class="case-actions">
+            <el-button
+              :icon="item.isPinned === 1 ? StarFilled : Star"
+              circle
+              size="small"
+              @click="handleTogglePin(item)"
+              :type="item.isPinned === 1 ? 'warning' : 'default'"
+            />
+            <el-button :icon="Edit" circle size="small" @click="handleEdit(item)" />
+            <el-button :icon="Delete" circle size="small" type="danger" @click="handleDelete(item)" />
+          </div>
         </div>
 
         <div class="case-body">
-          <div class="case-section">
+          <div v-if="item.symptom" class="case-section">
             <label>现象</label>
             <p class="case-text case-text--symptom">{{ item.symptom }}</p>
           </div>
 
-          <div class="case-section">
+          <div v-if="item.cause" class="case-section">
             <label>原因</label>
             <p class="case-text">{{ item.cause }}</p>
           </div>
 
-          <div class="case-section">
+          <div v-if="item.solution" class="case-section">
             <label>解决方案</label>
             <p class="case-text case-text--solution">{{ item.solution }}</p>
           </div>
 
-          <div v-if="item.example" class="case-example">
+          <div v-if="item.exampleWrong || item.exampleCorrect" class="case-example">
             <label>示例</label>
             <div class="example-grid">
-              <div v-if="item.example.wrong" class="example-item example-item--wrong">
+              <div v-if="item.exampleWrong" class="example-item example-item--wrong">
                 <span class="example-label">错误</span>
-                <code>{{ item.example.wrong }}</code>
+                <code>{{ item.exampleWrong }}</code>
               </div>
-              <div v-if="item.example.correct" class="example-item example-item--correct">
+              <div v-if="item.exampleCorrect" class="example-item example-item--correct">
                 <span class="example-label">正确</span>
-                <code>{{ item.example.correct }}</code>
+                <code>{{ item.exampleCorrect }}</code>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-if="item.tags && item.tags.length" class="case-footer">
+        <div v-if="item.tags" class="case-footer">
           <el-tag
-            v-for="tag in item.tags"
+            v-for="tag in item.tags.split(',')"
             :key="tag"
             size="small"
             type="info"
             class="case-tag"
           >
-            {{ tag }}
+            {{ tag.trim() }}
           </el-tag>
         </div>
       </div>
     </div>
+
+    <!-- 新增/编辑弹窗 -->
+    <el-dialog
+      v-model="showDialog"
+      :title="isEdit ? '编辑错误案例' : '新增错误案例'"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="formData" label-width="100px">
+        <el-form-item label="分类" required>
+          <el-select v-model="formData.category" style="width: 100%">
+            <el-option label="SQL 错误" value="sql" />
+            <el-option label="DEE 错误" value="dee" />
+            <el-option label="Token 错误" value="token" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="错误标题" required>
+          <el-input v-model="formData.title" placeholder="如：ORA-00904: 无效标识符" />
+        </el-form-item>
+
+        <el-form-item label="错误现象">
+          <el-input v-model="formData.symptom" type="textarea" :rows="2" placeholder="错误提示信息" />
+        </el-form-item>
+
+        <el-form-item label="原因分析">
+          <el-input v-model="formData.cause" type="textarea" :rows="2" placeholder="导致错误的原因" />
+        </el-form-item>
+
+        <el-form-item label="解决方案">
+          <el-input v-model="formData.solution" type="textarea" :rows="2" placeholder="如何解决这个错误" />
+        </el-form-item>
+
+        <el-form-item label="错误示例">
+          <el-input v-model="formData.exampleWrong" type="textarea" :rows="2" placeholder="错误的代码或写法" />
+        </el-form-item>
+
+        <el-form-item label="正确示例">
+          <el-input v-model="formData.exampleCorrect" type="textarea" :rows="2" placeholder="正确的代码或写法" />
+        </el-form-item>
+
+        <el-form-item label="标签">
+          <el-input v-model="formData.tags" placeholder="用逗号分隔，如：字段不存在,拼写错误" />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="showDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleSave">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -208,15 +385,20 @@ onMounted(() => {
   color: var(--color-text-secondary);
 }
 
-.filter-bar {
+.action-bar {
   display: flex;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
 }
 
+.filter-left {
+  display: flex;
+  gap: 12px;
+}
+
 .search-input {
-  flex: 1;
-  max-width: 400px;
+  width: 300px;
 }
 
 .category-tabs {
@@ -227,9 +409,6 @@ onMounted(() => {
 }
 
 .category-tab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
@@ -268,7 +447,7 @@ onMounted(() => {
 }
 
 .empty-state p {
-  margin-top: 12px;
+  margin: 12px 0 16px;
   font-size: 14px;
 }
 
@@ -292,6 +471,12 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 600;
   color: var(--color-text-primary);
+  flex: 1;
+}
+
+.case-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .case-body {
@@ -380,6 +565,7 @@ onMounted(() => {
   padding: 12px 20px;
   border-top: 1px solid var(--color-border-light);
   background: var(--color-bg-page);
+  flex-wrap: wrap;
 }
 
 .case-tag {

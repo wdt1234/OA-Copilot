@@ -83,3 +83,19 @@ CREATE TABLE IF NOT EXISTS shortcut_template (
     create_time TEXT    NOT NULL,
     update_time TEXT    NOT NULL
 );
+
+-- 错题库表
+CREATE TABLE IF NOT EXISTS error_case (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    category      TEXT    NOT NULL DEFAULT 'sql',
+    title         TEXT    NOT NULL,
+    symptom       TEXT,
+    cause         TEXT,
+    solution      TEXT,
+    example_wrong TEXT,
+    example_correct TEXT,
+    tags          TEXT,
+    is_pinned     INTEGER NOT NULL DEFAULT 0,
+    create_time   TEXT    NOT NULL,
+    update_time   TEXT    NOT NULL
+);

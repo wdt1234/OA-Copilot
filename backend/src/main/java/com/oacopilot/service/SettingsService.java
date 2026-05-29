@@ -50,22 +50,41 @@ public class SettingsService {
     }
 
     /**
-     * 更新 AI 设置
+     * 更新 AI 设置（实时生效，无需重启）
      */
     public Map<String, Object> updateAiSettings(Map<String, Object> newSettings) {
         try {
+            // 1. 实时更新内存中的配置（立即生效）
+            if (newSettings.containsKey("enabled")) {
+                aiProperties.setEnabled(Boolean.parseBoolean(newSettings.get("enabled").toString()));
+            }
+            if (newSettings.containsKey("endpoint")) {
+                aiProperties.setEndpoint(newSettings.get("endpoint").toString());
+            }
+            if (newSettings.containsKey("apiKey")) {
+                String apiKey = newSettings.get("apiKey").toString();
+                if (!apiKey.contains("****")) {
+                    aiProperties.setApiKey(apiKey);
+                }
+            }
+            if (newSettings.containsKey("model")) {
+                aiProperties.setModel(newSettings.get("model").toString());
+            }
+            if (newSettings.containsKey("timeout")) {
+                aiProperties.setTimeout(Integer.parseInt(newSettings.get("timeout").toString()));
+            }
+
+            // 2. 同时保存到文件（持久化）
             Path configPath = Path.of(CONFIG_FILE);
             if (!Files.exists(configPath)) {
-                // 尝试从 backend 目录查找
                 configPath = Path.of("backend", CONFIG_FILE);
                 if (!Files.exists(configPath)) {
-                    return Map.of("success", false, "message", "配置文件不存在");
+                    return Map.of("success", true, "message", "设置已生效（内存），但配置文件保存失败");
                 }
             }
 
             String content = Files.readString(configPath, StandardCharsets.UTF_8);
 
-            // 更新 AI 配置
             if (newSettings.containsKey("enabled")) {
                 content = updateYamlValue(content, "ai.enabled", newSettings.get("enabled").toString());
             }
@@ -74,7 +93,6 @@ public class SettingsService {
             }
             if (newSettings.containsKey("apiKey")) {
                 String apiKey = newSettings.get("apiKey").toString();
-                // 不更新如果还是掩码
                 if (!apiKey.contains("****")) {
                     content = updateYamlValue(content, "ai.api-key", apiKey);
                 }
@@ -88,8 +106,8 @@ public class SettingsService {
 
             Files.writeString(configPath, content, StandardCharsets.UTF_8);
 
-            log.info("系统设置已更新");
-            return Map.of("success", true, "message", "设置已保存，重启后生效");
+            log.info("系统设置已更新（实时生效）");
+            return Map.of("success", true, "message", "设置已保存并立即生效");
 
         } catch (Exception e) {
             log.error("更新设置失败: {}", e.getMessage());

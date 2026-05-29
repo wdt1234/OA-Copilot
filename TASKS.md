@@ -149,14 +149,13 @@
 - [ ] token 获取接口文档结构
 - [ ] 常用 header 规范
 
-## knowledge/error_cases（错误案例库）
+## knowledge/error_cases（错题库）
 
-- [x] SQL 常见错误案例（6 种：无效标识符、重复列、CLOB GROUP BY、日期类型、别名超限、长度超限）
-- [x] DEE 接口常见错误案例（5 种：表单不存在、字段格式、JSON 映射、数据库连接、SQL 语法）
-- [x] token 获取失败案例（5 种：认证错误、服务不可用、Token 过期、格式错误、权限不足）
-- [x] ErrorCaseService：加载 JSON 错误案例文件
-- [x] ErrorCaseController：REST API（按类别/搜索）
-- [x] ErrorCaseLibrary.vue：错题库前端页面（分类标签 + 搜索 + 卡片展示）
+- [x] error_case 数据库表（手动录入真实错误）
+- [x] ErrorCaseService：CRUD + 搜索 + 置顶
+- [x] ErrorCaseController：REST API（增删改查 + 置顶 + 批量删除）
+- [x] ErrorCaseLibrary.vue：错题库前端页面（新增/编辑/删除/置顶 + 分类筛选 + 搜索）
+- [x] 系统设置 AI 开关实时生效（修改后无需重启）
 
 ---
 

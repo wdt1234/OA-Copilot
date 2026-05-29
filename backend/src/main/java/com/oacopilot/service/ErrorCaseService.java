@@ -1,99 +1,93 @@
 package com.oacopilot.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
+import com.oacopilot.mapper.ErrorCaseMapper;
+import com.oacopilot.model.ErrorCase;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 public class ErrorCaseService {
 
-    private static final Logger log = LoggerFactory.getLogger(ErrorCaseService.class);
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final Map<String, List<Map<String, Object>>> cache = new ConcurrentHashMap<>();
+    private final ErrorCaseMapper errorCaseMapper;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public ErrorCaseService(ErrorCaseMapper errorCaseMapper) {
+        this.errorCaseMapper = errorCaseMapper;
+    }
 
     /**
      * 获取所有错误案例
      */
-    public List<Map<String, Object>> getAllErrorCases() {
-        List<Map<String, Object>> allCases = new ArrayList<>();
-        allCases.addAll(loadErrorCases("sql_errors"));
-        allCases.addAll(loadErrorCases("dee_errors"));
-        allCases.addAll(loadErrorCases("token_errors"));
-        return allCases;
+    public List<ErrorCase> getAllErrorCases() {
+        return errorCaseMapper.findAll();
     }
 
     /**
      * 按类别获取错误案例
      */
-    public List<Map<String, Object>> getErrorCasesByCategory(String category) {
-        return switch (category.toLowerCase()) {
-            case "sql" -> loadErrorCases("sql_errors");
-            case "dee" -> loadErrorCases("dee_errors");
-            case "token" -> loadErrorCases("token_errors");
-            default -> getAllErrorCases();
-        };
+    public List<ErrorCase> getErrorCasesByCategory(String category) {
+        return errorCaseMapper.findByCategory(category);
     }
 
     /**
      * 搜索错误案例
      */
-    public List<Map<String, Object>> searchErrorCases(String keyword) {
-        String lowerKeyword = keyword.toLowerCase();
-        return getAllErrorCases().stream()
-                .filter(c -> matchesKeyword(c, lowerKeyword))
-                .collect(Collectors.toList());
-    }
-
-    private boolean matchesKeyword(Map<String, Object> errorCase, String keyword) {
-        String title = getStringValue(errorCase, "title");
-        String description = getStringValue(errorCase, "description");
-        String symptom = getStringValue(errorCase, "symptom");
-        String solution = getStringValue(errorCase, "solution");
-
-        return title.toLowerCase().contains(keyword)
-                || description.toLowerCase().contains(keyword)
-                || symptom.toLowerCase().contains(keyword)
-                || solution.toLowerCase().contains(keyword);
+    public List<ErrorCase> searchErrorCases(String category, String keyword) {
+        String searchKeyword = "%" + keyword + "%";
+        return errorCaseMapper.search(category, searchKeyword);
     }
 
     /**
-     * 加载错误案例文件
+     * 根据ID获取错误案例
      */
-    @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> loadErrorCases(String fileName) {
-        if (cache.containsKey(fileName)) {
-            return cache.get(fileName);
-        }
-
-        try {
-            ClassPathResource resource = new ClassPathResource("knowledge/error_cases/" + fileName + ".json");
-            if (!resource.exists()) {
-                log.warn("错误案例文件不存在: {}", fileName);
-                return Collections.emptyList();
-            }
-
-            try (InputStream is = resource.getInputStream()) {
-                List<Map<String, Object>> cases = objectMapper.readValue(is, new TypeReference<>() {});
-                cache.put(fileName, cases);
-                log.info("加载错误案例: {} - {} 条", fileName, cases.size());
-                return cases;
-            }
-        } catch (Exception e) {
-            log.error("加载错误案例失败: {}", fileName, e);
-            return Collections.emptyList();
-        }
+    public ErrorCase getErrorCaseById(Long id) {
+        return errorCaseMapper.findById(id);
     }
 
-    private String getStringValue(Map<String, Object> map, String key) {
-        Object value = map.get(key);
-        return value != null ? value.toString() : "";
+    /**
+     * 新增错误案例
+     */
+    public ErrorCase addErrorCase(ErrorCase errorCase) {
+        String now = LocalDateTime.now().format(FORMATTER);
+        errorCase.setCreateTime(now);
+        errorCase.setUpdateTime(now);
+        if (errorCase.getIsPinned() == null) {
+            errorCase.setIsPinned(0);
+        }
+        errorCaseMapper.insert(errorCase);
+        return errorCase;
+    }
+
+    /**
+     * 更新错误案例
+     */
+    public ErrorCase updateErrorCase(ErrorCase errorCase) {
+        errorCase.setUpdateTime(LocalDateTime.now().format(FORMATTER));
+        errorCaseMapper.update(errorCase);
+        return errorCase;
+    }
+
+    /**
+     * 更新置顶状态
+     */
+    public void updatePinned(Long id, Integer isPinned) {
+        errorCaseMapper.updatePinned(id, isPinned, LocalDateTime.now().format(FORMATTER));
+    }
+
+    /**
+     * 删除错误案例
+     */
+    public boolean deleteErrorCase(Long id) {
+        return errorCaseMapper.deleteById(id) > 0;
+    }
+
+    /**
+     * 批量删除错误案例
+     */
+    public boolean deleteErrorCases(List<Long> ids) {
+        return errorCaseMapper.deleteByIds(ids) > 0;
     }
 }
