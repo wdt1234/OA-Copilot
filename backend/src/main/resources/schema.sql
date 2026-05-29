@@ -99,3 +99,16 @@ CREATE TABLE IF NOT EXISTS error_case (
     create_time   TEXT    NOT NULL,
     update_time   TEXT    NOT NULL
 );
+
+-- AI配置方案表
+CREATE TABLE IF NOT EXISTS ai_config (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    name          TEXT    NOT NULL,
+    endpoint      TEXT    NOT NULL,
+    api_key       TEXT    NOT NULL,
+    model         TEXT    NOT NULL,
+    timeout       INTEGER NOT NULL DEFAULT 300,
+    is_active     INTEGER NOT NULL DEFAULT 0,
+    create_time   TEXT    NOT NULL,
+    update_time   TEXT    NOT NULL
+);
