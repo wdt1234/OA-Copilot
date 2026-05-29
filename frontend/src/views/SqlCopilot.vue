@@ -407,6 +407,42 @@ onMounted(async () => {
             </div>
           </div>
 
+          <!-- 快捷模板 -->
+          <div class="quick-templates-section">
+            <div class="quick-templates-header">
+              <span class="quick-templates-label">快捷模板</span>
+              <div class="quick-templates-actions">
+                <button class="quick-template-btn" @click="addTemplate">新增</button>
+                <button class="quick-template-btn" @click="setAsDefault">设为默认</button>
+                <button class="quick-template-btn" @click="resetTemplates">恢复</button>
+              </div>
+            </div>
+            <div class="quick-templates-list">
+              <div
+                v-for="(t, idx) in quickTemplates"
+                :key="idx"
+                class="quick-template-item"
+                @click="useTemplate(t)"
+              >
+                <div class="quick-template-item__icon">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <span class="quick-template-item__text">{{ t }}</span>
+                <div class="quick-template-item__actions">
+                  <button class="quick-template-action-btn" @click.stop="editTemplate(idx)" title="编辑">
+                    <el-icon :size="10"><Edit /></el-icon>
+                  </button>
+                  <button class="quick-template-action-btn quick-template-action-btn--danger" @click.stop="removeTemplate(idx)" title="删除">
+                    <el-icon :size="10"><Close /></el-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- 输入区 -->
           <div class="input-area">
             <div class="input-wrapper">
@@ -694,48 +730,6 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-
-        <!-- 快捷模板 -->
-        <div class="panel panel--side animate-fade-in-up" style="animation-delay: 0.24s; margin-top: 16px">
-          <div class="side-section">
-            <div class="side-section__header">
-              <h3 class="side-section__title">
-                <el-icon :size="16"><Collection /></el-icon>
-                快捷模板
-              </h3>
-              <div class="side-section__actions">
-                <button class="side-action-btn" @click="addTemplate">新增</button>
-                <button class="side-action-btn" @click="setAsDefault">设为默认</button>
-                <button class="side-action-btn" @click="resetTemplates">恢复</button>
-              </div>
-            </div>
-
-            <div class="template-list">
-              <div
-                v-for="(t, idx) in quickTemplates"
-                :key="idx"
-                class="template-item"
-                @click="useTemplate(t)"
-              >
-                <div class="template-item__icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
-                <span class="template-item__text">{{ t }}</span>
-                <div class="template-item__actions">
-                  <button class="template-action-btn" @click.stop="editTemplate(idx)" title="编辑">
-                    <el-icon :size="12"><Edit /></el-icon>
-                  </button>
-                  <button class="template-action-btn template-action-btn--danger" @click.stop="removeTemplate(idx)" title="删除">
-                    <el-icon :size="12"><Close /></el-icon>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </el-col>
     </el-row>
 
@@ -919,6 +913,128 @@ onMounted(async () => {
 
 .panel--input {
   margin-bottom: 16px;
+}
+
+/* Quick Templates Section */
+.quick-templates-section {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-bg-page);
+}
+
+.quick-templates-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.quick-templates-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.quick-templates-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.quick-template-btn {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all var(--transition-fast);
+}
+
+.quick-template-btn:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.quick-templates-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quick-template-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  max-width: 200px;
+}
+
+.quick-template-item:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.quick-template-item__icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.quick-template-item:hover .quick-template-item__icon {
+  opacity: 1;
+}
+
+.quick-template-item__text {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-template-item:hover .quick-template-item__text {
+  color: var(--color-primary);
+}
+
+.quick-template-item__actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.quick-template-item:hover .quick-template-item__actions {
+  opacity: 1;
+}
+
+.quick-template-action-btn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+}
+
+.quick-template-action-btn:hover {
+  background: var(--color-bg-page);
+  color: var(--color-text-secondary);
+}
+
+.quick-template-action-btn--danger:hover {
+  background: #fef2f2;
+  color: var(--color-danger);
 }
 
 /* Recommend Section */
@@ -1481,85 +1597,6 @@ onMounted(async () => {
 .history-action-btn--danger:hover {
   color: var(--color-danger);
   background: #fef2f2;
-}
-
-/* Template List */
-.template-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.template-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.template-item:hover {
-  background: var(--color-bg-page);
-}
-
-.template-item__icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.template-item__text {
-  flex: 1;
-  font-size: 13px;
-  color: var(--color-text-primary);
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-
-.template-item__actions {
-  display: flex;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.template-item:hover .template-item__actions {
-  opacity: 1;
-}
-
-.template-action-btn {
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  border-radius: 5px;
-  cursor: pointer;
-  color: var(--color-text-muted);
-  transition: all var(--transition-fast);
-}
-
-.template-action-btn:hover {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-}
-
-.template-action-btn--danger:hover {
-  background: #fef2f2;
-  color: var(--color-danger);
 }
 
 /* ═══════════════════════════════════════════════════════
