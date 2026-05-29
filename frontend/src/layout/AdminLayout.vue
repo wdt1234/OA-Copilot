@@ -94,6 +94,11 @@ function toggleSidebar() {
         <transition name="fade">
           <span v-show="!isCollapse" class="sidebar__logo-text">OA Copilot</span>
         </transition>
+        <transition name="fade">
+          <svg v-show="!isCollapse" class="sidebar__logo-ai" width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L9.5 8.5L3 12L9.5 15.5L12 22L14.5 15.5L21 12L14.5 8.5L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </transition>
       </div>
 
       <!-- 菜单 -->
@@ -238,6 +243,17 @@ function toggleSidebar() {
   font-weight: 700;
   letter-spacing: -0.3px;
   white-space: nowrap;
+}
+
+.sidebar__logo-ai {
+  color: var(--color-primary);
+  margin-left: 4px;
+  animation: ai-sparkle 2s ease-in-out infinite;
+}
+
+@keyframes ai-sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
 }
 
 /* Menu */
