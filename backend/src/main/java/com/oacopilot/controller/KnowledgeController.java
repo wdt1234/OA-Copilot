@@ -42,4 +42,12 @@ public class KnowledgeController {
     public JsonNode getFormDictionary(@PathVariable String formCode) {
         return knowledgeService.getFormDictionary(formCode);
     }
+
+    /**
+     * 列出所有系统表数据字典
+     */
+    @GetMapping("/system-tables")
+    public List<Map<String, Object>> listSystemTables() {
+        return knowledgeService.listSystemTables();
+    }
 }

@@ -450,4 +450,28 @@ public class KnowledgeService {
 
         return sb.toString();
     }
+
+    /**
+     * 列出所有系统表（用于前端展示）
+     * @return 系统表列表，包含 tableName、description、fields 等信息
+     */
+    public java.util.List<java.util.Map<String, Object>> listSystemTables() {
+        java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
+        String[] tableNames = {"org_member", "org_unit", "org_post", "ctp_enum_item",
+                               "ctp_affair", "col_summary", "ctp_comment_all"};
+
+        for (String name : tableNames) {
+            JsonNode node = getSystemTable(name);
+            if (node != null) {
+                java.util.Map<String, Object> tableInfo = new java.util.LinkedHashMap<>();
+                tableInfo.put("id", name);
+                tableInfo.put("tableName", node.path("tableName").asText());
+                tableInfo.put("description", node.path("description").asText());
+                tableInfo.put("joinRule", node.path("joinRule").asText(""));
+                tableInfo.put("fields", node.path("fields"));
+                result.add(tableInfo);
+            }
+        }
+        return result;
+    }
 }

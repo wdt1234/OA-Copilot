@@ -17,6 +17,27 @@ const selectMode = ref(false)
 // ── 系统表状态 ──
 
 const systemTablesCount = ref(7)
+const showSystemTables = ref(false)
+const systemTables = ref([])
+const expandedTable = ref('')
+
+async function loadSystemTables() {
+  try {
+    const { data } = await axios.get('/api/knowledge/system-tables')
+    systemTables.value = data
+    systemTablesCount.value = data.length
+  } catch (e) {
+    console.error('加载系统表失败', e)
+  }
+}
+
+function openSystemTables() {
+  showSystemTables.value = true
+}
+
+function toggleTableExpand(tableName) {
+  expandedTable.value = expandedTable.value === tableName ? '' : tableName
+}
 
 // ── 推荐问题 ──
 
@@ -351,6 +372,7 @@ function handleRecommendClick(q) {
 
 onMounted(async () => {
   await loadAvailableForms()
+  await loadSystemTables()
   loadHistory()
   loadTemplates()
   shuffleExamples()
@@ -378,9 +400,10 @@ onMounted(async () => {
                 <h2 class="panel__title-text">智能生成 SQL</h2>
               </div>
             </div>
-            <div class="panel__ai-badge">
+            <div class="panel__ai-badge" @click="openSystemTables" style="cursor: pointer">
               <span class="panel__ai-badge-dot"></span>
               {{ systemTablesCount }} 张系统表已就绪
+              <el-icon :size="12"><ArrowRight /></el-icon>
             </div>
           </div>
 
@@ -710,6 +733,55 @@ onMounted(async () => {
         </div>
       </el-col>
     </el-row>
+
+    <!-- 系统表数据字典抽屉 -->
+    <el-drawer
+      v-model="showSystemTables"
+      title="系统表数据字典"
+      direction="rtl"
+      size="480px"
+    >
+      <div class="system-tables-drawer">
+        <p class="drawer-desc">OA 系统内置表，用于 ID 转名称、流程状态查询等</p>
+
+        <div class="system-table-list">
+          <div
+            v-for="table in systemTables"
+            :key="table.id"
+            class="system-table-item"
+            :class="{ 'system-table-item--expanded': expandedTable === table.id }"
+          >
+            <div class="system-table-header" @click="toggleTableExpand(table.id)">
+              <div class="system-table-info">
+                <span class="system-table-name">{{ table.tableName }}</span>
+                <span class="system-table-desc">{{ table.description }}</span>
+              </div>
+              <el-icon class="system-table-arrow" :class="{ 'system-table-arrow--expanded': expandedTable === table.id }">
+                <ArrowRight />
+              </el-icon>
+            </div>
+
+            <div v-if="expandedTable === table.id" class="system-table-detail">
+              <div v-if="table.joinRule" class="detail-section">
+                <span class="detail-label">JOIN 规则：</span>
+                <code class="detail-code">{{ table.joinRule }}</code>
+              </div>
+
+              <div class="detail-section">
+                <span class="detail-label">字段列表：</span>
+                <div class="field-list">
+                  <div v-for="field in table.fields" :key="field.fieldName" class="field-item">
+                    <span class="field-name">{{ field.fieldName }}</span>
+                    <span class="field-display">{{ field.displayName }}</span>
+                    <span v-if="field.isSpecial" class="field-special">特殊</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -1615,5 +1687,156 @@ onMounted(async () => {
   color: var(--color-primary);
   font-weight: 500;
   opacity: 0.7;
+}
+
+/* ═══════════════════════════════════════════════════════
+   System Tables Drawer
+   ═══════════════════════════════════════════════════════ */
+
+.system-tables-drawer {
+  padding: 0 4px;
+}
+
+.drawer-desc {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.system-table-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.system-table-item {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.system-table-item:hover {
+  border-color: var(--color-border);
+}
+
+.system-table-item--expanded {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.system-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.system-table-header:hover {
+  background: var(--color-bg-page);
+}
+
+.system-table-item--expanded .system-table-header {
+  background: transparent;
+}
+
+.system-table-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.system-table-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.system-table-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.system-table-arrow {
+  color: var(--color-text-muted);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.system-table-arrow--expanded {
+  transform: rotate(90deg);
+  color: var(--color-primary);
+}
+
+.system-table-detail {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.detail-section {
+  margin-top: 12px;
+}
+
+.detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.detail-code {
+  font-size: 12px;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  background: var(--color-bg-page);
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: block;
+  word-break: break-all;
+  color: var(--color-primary);
+}
+
+.field-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.field-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--color-bg-page);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.field-name {
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  min-width: 120px;
+}
+
+.field-display {
+  color: var(--color-text-secondary);
+  flex: 1;
+}
+
+.field-special {
+  font-size: 10px;
+  color: var(--color-warning);
+  background: #fef3c7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
 }
 </style>
