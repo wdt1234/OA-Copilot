@@ -60,7 +60,7 @@ function handleEdit(row) {
     id: row.id,
     name: row.name,
     endpoint: row.endpoint,
-    apiKey: '', // 不回显，避免误改
+    apiKey: row.apiKey || '', // 显示掩码后的 key
     model: row.model,
     timeout: row.timeout
   }

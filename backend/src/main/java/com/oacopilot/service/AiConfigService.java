@@ -60,10 +60,19 @@ public class AiConfigService {
     }
 
     /**
-     * 更新配置
+     * 更新配置（如果 apiKey 包含掩码则不更新）
      */
     public AiConfig updateConfig(AiConfig config) {
         config.setUpdateTime(LocalDateTime.now().format(FORMATTER));
+
+        // 如果 apiKey 包含掩码，从数据库读取真实值
+        if (config.getApiKey() != null && config.getApiKey().contains("****")) {
+            AiConfig existing = aiConfigMapper.findById(config.getId());
+            if (existing != null) {
+                config.setApiKey(existing.getApiKey());
+            }
+        }
+
         aiConfigMapper.update(config);
         return config;
     }
