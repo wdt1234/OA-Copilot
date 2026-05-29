@@ -46,8 +46,10 @@
 - OA 表单选人字段存储的是 ORG_MEMBER.ID
 - **默认直接 JOIN**：`ORG_MEMBER.ID = formmain_xxxx.fieldxxxx`（不做 TO_CHAR 转换，避免索引失效）
 - **仅当报类型不匹配错误时**才加 TO_CHAR：`TO_CHAR(ORG_MEMBER.ID) = formmain_xxxx.fieldxxxx`
-- **默认人员过滤**：查询 ORG_MEMBER 时建议加 `STATE = 1 AND IS_ENABLE = 1 AND IS_DELETED = 0`
-  - 排除离职人员、停用账号、已删除账号
+- **重要：不要添加人员状态过滤条件**
+  - 不要加 `AND STATE = 1 AND IS_ENABLE = 1 AND IS_DELETED = 0`
+  - 原因：用户需要查历史数据，包括已离职/失效的人员
+  - 性能影响：添加这些条件会显著降低查询效率（从 15s 降到 1.5s）
 - **关联部门**：`ORG_MEMBER.ORG_DEPARTMENT_ID = ORG_UNIT.ID`
 - **关联岗位**：`ORG_MEMBER.ORG_POST_ID = ORG_POST.ID`
 
@@ -58,7 +60,10 @@
 - **仅当报类型不匹配错误时**才加 TO_CHAR
 - 企业实际使用中 ORG_UNIT 仅作为**部门表**，不考虑 Account/Team/Group 等类型
 - 用户输入"数字化中心"→ 直接匹配 `ORG_UNIT.NAME = '数字化中心'`
-- **默认过滤**：查询 ORG_UNIT 时建议加 `IS_ENABLE = 1 AND IS_DELETED = 0`
+- **重要：不要添加部门状态过滤条件**
+  - 不要加 `AND IS_ENABLE = 1 AND IS_DELETED = 0`
+  - 原因：用户需要查历史数据，包括已撤销/删除的部门
+  - 性能影响：添加这些条件会降低查询效率
 - **树形层级**：PATH 字段表示部门层级路径（如一级 000000010007，二级 0000000100070001），可用于查询下级部门
 
 ### ORG_POST 表规则（选岗位字段必须遵守）
@@ -66,7 +71,10 @@
 - OA 表单选岗位字段存储的是 ORG_POST.ID
 - **默认直接 JOIN**：`ORG_POST.ID = formmain_xxxx.fieldxxxx`（不做 TO_CHAR 转换）
 - **仅当报类型不匹配错误时**才加 TO_CHAR
-- **默认过滤**：查询 ORG_POST 时建议加 `IS_ENABLE = 1 AND IS_DELETED = 0`
+- **重要：不要添加岗位状态过滤条件**
+  - 不要加 `AND IS_ENABLE = 1 AND IS_DELETED = 0`
+  - 原因：用户需要查历史数据，包括已撤销/删除的岗位
+  - 性能影响：添加这些条件会降低查询效率
 - **岗位类型**：1=管理类，2=技术类，3=营销类，4=职能类
 - **关联人员**：`ORG_MEMBER.ORG_POST_ID = ORG_POST.ID`
 
@@ -77,7 +85,10 @@
 - **仅当报类型不匹配错误时**才加 TO_CHAR
 - **禁止错误 JOIN**：不允许 `fieldxxxx = ENUMVALUE` 或 `fieldxxxx = CODE`
 - **默认显示 SHOWVALUE**：`SELECT cei.SHOWVALUE AS 中文名`
-- **默认过滤**：查询 CTP_ENUM_ITEM 时建议加 `STATE = 1`（0=停用, 1=启用, 3=删除）
+- **重要：不要添加枚举状态过滤条件**
+  - 不要加 `AND STATE = 1`
+  - 原因：用户需要查历史数据，包括已停用/删除的枚举值
+  - 性能影响：添加这些条件会降低查询效率
 - **当前阶段不按 REF_ENUMID 过滤**：直接按 ID JOIN 即可
 - **多个下拉字段**：每个下拉字段独立 JOIN，使用别名区分（如 `cei_currency`、`cei_status`）
 
@@ -210,7 +221,6 @@ member_names AS (
     SELECT a.form_id, a.field_code, om.NAME
     FROM all_members a
     JOIN ORG_MEMBER om ON om.ID = a.member_id
-    WHERE om.STATE = 1 AND om.IS_ENABLE = 1 AND om.IS_DELETED = 0
 ),
 -- Step 3: 统一聚合
 member_agg AS (
