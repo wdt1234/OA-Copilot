@@ -15,10 +15,6 @@ const aiConfig = ref({
   model: '',
   timeout: 300
 })
-const serverConfig = ref({
-  port: 8080
-})
-
 // ── 加载设置 ──
 
 async function loadSettings() {
@@ -27,9 +23,6 @@ async function loadSettings() {
     const { data } = await axios.get('/api/settings')
     if (data.ai) {
       aiConfig.value = { ...aiConfig.value, ...data.ai }
-    }
-    if (data.server) {
-      serverConfig.value = { ...serverConfig.value, ...data.server }
     }
   } catch (e) {
     console.error('加载设置失败', e)
@@ -183,26 +176,6 @@ onMounted(() => {
           <el-icon><Check /></el-icon>
           保存设置
         </el-button>
-      </div>
-    </div>
-
-    <!-- 服务器配置 -->
-    <div class="settings-card">
-      <div class="card-header">
-        <h3>服务器配置</h3>
-      </div>
-
-      <div class="settings-form">
-        <div class="form-item">
-          <label>服务端口</label>
-          <el-input-number
-            v-model="serverConfig.port"
-            :min="1024"
-            :max="65535"
-            disabled
-          />
-          <span class="form-hint">修改端口需要重启服务</span>
-        </div>
       </div>
     </div>
 

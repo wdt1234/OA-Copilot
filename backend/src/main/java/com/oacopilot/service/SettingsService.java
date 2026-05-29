@@ -3,7 +3,6 @@ package com.oacopilot.service;
 import com.oacopilot.config.AiProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -18,9 +17,6 @@ public class SettingsService {
     private static final String CONFIG_FILE = "src/main/resources/application.yml";
 
     private final AiProperties aiProperties;
-
-    @Value("${server.port:8080}")
-    private int serverPort;
 
     public SettingsService(AiProperties aiProperties) {
         this.aiProperties = aiProperties;
@@ -40,11 +36,6 @@ public class SettingsService {
         aiConfig.put("model", aiProperties.getModel());
         aiConfig.put("timeout", aiProperties.getTimeout());
         settings.put("ai", aiConfig);
-
-        // 服务器配置
-        Map<String, Object> serverConfig = new LinkedHashMap<>();
-        serverConfig.put("port", serverPort);
-        settings.put("server", serverConfig);
 
         return settings;
     }
