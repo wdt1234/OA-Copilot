@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS sql_history (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     prompt      TEXT    NOT NULL,
     sql_result  TEXT    NOT NULL,
+    form_code   TEXT,
     is_pinned   INTEGER NOT NULL DEFAULT 0,
     create_time TEXT    NOT NULL
 );
@@ -55,4 +56,30 @@ CREATE TABLE IF NOT EXISTS sql_task (
     error_message TEXT,
     create_time   TEXT    NOT NULL,
     update_time   TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS api_doc_history (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    form_code       TEXT,
+    form_name       TEXT,
+    interface_code  TEXT    NOT NULL,
+    interface_name  TEXT    NOT NULL,
+    interface_type  TEXT    NOT NULL,
+    connection_type TEXT    NOT NULL,
+    source_system   TEXT,
+    source_contact  TEXT,
+    target_contact  TEXT,
+    other_notes     TEXT,
+    is_pinned       INTEGER NOT NULL DEFAULT 0,
+    create_time     TEXT    NOT NULL
+);
+
+-- 快捷模板表
+CREATE TABLE IF NOT EXISTS shortcut_template (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    category    TEXT    NOT NULL DEFAULT 'sql',
+    content     TEXT    NOT NULL,
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    create_time TEXT    NOT NULL,
+    update_time TEXT    NOT NULL
 );

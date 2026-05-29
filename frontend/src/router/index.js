@@ -36,6 +36,18 @@ const routes = [
         name: 'DataDictionary',
         component: () => import('../views/DataDictionary.vue'),
         meta: { title: '数据字典管理', icon: 'Notebook' }
+      },
+      {
+        path: 'api-doc',
+        name: 'ApiDocGenerator',
+        component: () => import('../views/ApiDocGenerator.vue'),
+        meta: { title: '接口文档生成', icon: 'Document' }
+      },
+      {
+        path: 'prompt-manager',
+        name: 'PromptManager',
+        component: () => import('../views/PromptManager.vue'),
+        meta: { title: 'AI Prompt 管理', icon: 'Setting' }
       }
     ]
   }

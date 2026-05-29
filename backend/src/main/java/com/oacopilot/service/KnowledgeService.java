@@ -40,6 +40,34 @@ public class KnowledgeService {
     }
 
     /**
+     * 更新 Prompt 内容
+     * @param path prompt 路径（如 sql/form_query）
+     * @param content 新内容
+     * @return 是否成功
+     */
+    public boolean updatePrompt(String path, String content) {
+        try {
+            // 更新内存缓存
+            promptCache.put(path, content);
+
+            // 尝试保存到文件系统（外部目录）
+            String externalPath = "prompts/" + path + ".md";
+            java.io.File file = new java.io.File(externalPath);
+            java.io.File parentDir = file.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+            java.nio.file.Files.writeString(file.toPath(), content, StandardCharsets.UTF_8);
+
+            log.info("更新 Prompt: {} (保存到 {})", path, externalPath);
+            return true;
+        } catch (Exception e) {
+            log.error("更新 Prompt 失败: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * 获取表单数据字典 JSON
      * @param formCode 表单代码，如 guazhang_apply
      * @return JSON 树，找不到返回 null
@@ -102,6 +130,20 @@ public class KnowledgeService {
      */
     public String getPrompt(String name) {
         return promptCache.computeIfAbsent(name, n -> {
+            // 优先从外部目录加载（用户修改过的版本）
+            String externalPath = "prompts/" + n + ".md";
+            try {
+                java.io.File externalFile = new java.io.File(externalPath);
+                if (externalFile.exists()) {
+                    String content = java.nio.file.Files.readString(externalFile.toPath(), StandardCharsets.UTF_8);
+                    log.info("从外部目录加载 Prompt: {}", externalPath);
+                    return content;
+                }
+            } catch (Exception e) {
+                log.warn("从外部目录加载 Prompt 失败: {}", e.getMessage());
+            }
+
+            // fallback 到 classpath
             String path = "knowledge/prompts/" + n + ".md";
             try {
                 ClassPathResource resource = new ClassPathResource(path);

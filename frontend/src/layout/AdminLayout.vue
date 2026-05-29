@@ -47,7 +47,7 @@ const menuGroups = [
     label: '知识资产',
     items: [
       { path: '/data-dictionary', title: '系统知识库', icon: 'Notebook' },
-      { path: '/field-mapper', title: 'AI Prompt 管理', icon: 'Switch' },
+      { path: '/prompt-manager', title: 'AI Prompt 管理', icon: 'Setting' },
     ]
   },
   {

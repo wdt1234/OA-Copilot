@@ -194,9 +194,9 @@
 ### 立即执行（1-2 天）- 最高优先级
 
 - [x] **AI Prompt 管理页面**（菜单已有，页面未实现）
-  - 功能：查看/编辑/新增 Prompt 模板
-  - 后端接口已有：`/api/knowledge/prompts`
-  - 后端已完成，前端待创建
+  - 功能：查看/编辑 Prompt 模板
+  - 后端接口已有：`/api/knowledge/prompts` + `PUT /api/knowledge/prompts/{path}`
+  - 前端页面：`PromptManager.vue`（按分类查看 + 编辑保存）
 - [ ] **系统运行日志页面**（菜单已有，页面未实现）
   - 功能：查看应用日志，支持筛选和导出
   - 后端需要新增接口

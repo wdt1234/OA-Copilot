@@ -2,6 +2,41 @@
 
 # 2026-05-29
 
+## 快捷模板云端同步 + AI Prompt 管理页面
+
+### 快捷模板云端同步
+
+- 快捷模板从 localStorage 改为后端数据库存储（`shortcut_template` 表）
+- 新增 ShortcutTemplate 实体类 + Mapper + Controller
+- 支持增删改查、重置默认、批量删除
+- 前端 SqlCopilot.vue 改为从后端 API 加载/保存模板
+- 解决多设备模板不同步问题
+
+### AI Prompt 管理页面
+
+- 新增 PromptManager.vue 前端页面
+- 支持按分类查看 Prompt 模板（SQL / DEE）
+- 支持编辑 Prompt 内容并保存
+- 后端新增 `PUT /api/knowledge/prompts/{path}` 接口
+- KnowledgeService 新增 updatePrompt() 方法
+- 支持保存到外部目录（prompts/），修改后可持久化
+- 侧边栏菜单更新：AI Prompt 管理指向正确路径
+
+### 涉及文件
+
+- backend: schema.sql（新增 shortcut_template 表）
+- backend: ShortcutTemplate.java, ShortcutTemplateMapper.java, ShortcutTemplateController.java
+- backend: KnowledgeController.java（新增 updatePrompt 接口）
+- backend: KnowledgeService.java（新增 updatePrompt 方法 + 优先加载外部目录）
+- frontend: SqlCopilot.vue（模板改为云端同步）
+- frontend: PromptManager.vue（新增页面）
+- frontend: router/index.js（新增路由）
+- frontend: AdminLayout.vue（修正菜单路径）
+
+---
+
+# 2026-05-29
+
 ## 系统优化 + 优先级规划
 
 ### 性能优化

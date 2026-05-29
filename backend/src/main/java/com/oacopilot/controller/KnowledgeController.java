@@ -58,4 +58,18 @@ public class KnowledgeController {
     public List<Map<String, Object>> listPrompts() {
         return knowledgeService.listPrompts();
     }
+
+    /**
+     * 更新 Prompt 内容
+     */
+    @PutMapping("/prompts/{path}")
+    public Map<String, Object> updatePrompt(@PathVariable String path, @RequestBody Map<String, String> body) {
+        String content = body.getOrDefault("content", "");
+        boolean success = knowledgeService.updatePrompt(path, content);
+        if (success) {
+            return Map.of("message", "更新成功");
+        } else {
+            return Map.of("error", "更新失败，文件不存在");
+        }
+    }
 }

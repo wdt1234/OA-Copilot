@@ -73,56 +73,51 @@ function useQuickExample(text) {
   prompt.value = text
 }
 
-// ── 快捷模板 ──
-
-const builtinTemplates = [
-  '查询 formmain_1001 中本月所有请假单',
-  '查询 OA 待办流程列表',
-  '查询 EBS 订单数据关联客户信息',
-  '查询 formmain_2003 中状态为审批中的记录',
-  '统计各表单本月提交数量'
-]
+// ── 快捷模板（云端同步） ──
 
 const quickTemplates = ref([])
 
-function loadTemplates() {
+async function loadTemplates() {
   try {
-    const saved = localStorage.getItem('sql_copilot_quick_templates')
-    if (saved) {
-      quickTemplates.value = JSON.parse(saved)
-    } else {
-      const defaultSaved = localStorage.getItem('sql_copilot_default_templates')
-      quickTemplates.value = defaultSaved ? JSON.parse(defaultSaved) : [...builtinTemplates]
-    }
+    const { data } = await axios.get('/api/shortcut-templates/sql')
+    quickTemplates.value = data.map(t => ({ id: t.id, content: t.content }))
   } catch (e) {
-    quickTemplates.value = [...builtinTemplates]
+    console.error('加载模板失败', e)
+    quickTemplates.value = []
   }
 }
 
-function saveTemplates() {
-  localStorage.setItem('sql_copilot_quick_templates', JSON.stringify(quickTemplates.value))
-}
-
 function useTemplate(text) {
-  prompt.value = text
+  prompt.value = typeof text === 'string' ? text : text.content
 }
 
-function removeTemplate(index) {
-  quickTemplates.value.splice(index, 1)
-  saveTemplates()
+async function removeTemplate(index) {
+  const template = quickTemplates.value[index]
+  if (!template || !template.id) {
+    quickTemplates.value.splice(index, 1)
+    return
+  }
+  try {
+    await axios.delete(`/api/shortcut-templates/${template.id}`)
+    quickTemplates.value.splice(index, 1)
+    ElMessage.success('已删除')
+  } catch (e) {
+    ElMessage.error('删除失败')
+  }
 }
 
 async function editTemplate(index) {
+  const template = quickTemplates.value[index]
   try {
     const { value } = await ElMessageBox.prompt('编辑模板内容', '编辑模板', {
       confirmButtonText: '保存',
       cancelButtonText: '取消',
-      inputValue: quickTemplates.value[index],
+      inputValue: template.content,
       inputType: 'textarea',
       inputValidator: (val) => val.trim() ? true : '模板内容不能为空'
     })
-    quickTemplates.value[index] = value.trim()
-    saveTemplates()
+    await axios.put(`/api/shortcut-templates/${template.id}`, { content: value.trim() })
+    quickTemplates.value[index].content = value.trim()
     ElMessage.success('模板已更新')
   } catch (e) {}
 }
@@ -135,22 +130,23 @@ async function addTemplate() {
       inputType: 'textarea',
       inputValidator: (val) => val.trim() ? true : '模板内容不能为空'
     })
-    quickTemplates.value.push(value.trim())
-    saveTemplates()
+    const { data } = await axios.post('/api/shortcut-templates', {
+      category: 'sql',
+      content: value.trim()
+    })
+    quickTemplates.value.push({ id: data.id, content: data.content })
     ElMessage.success('模板已添加')
   } catch (e) {}
 }
 
-function resetTemplates() {
-  const defaultSaved = localStorage.getItem('sql_copilot_default_templates')
-  quickTemplates.value = defaultSaved ? JSON.parse(defaultSaved) : [...builtinTemplates]
-  saveTemplates()
-  ElMessage.success('已恢复默认模板')
-}
-
-function setAsDefault() {
-  localStorage.setItem('sql_copilot_default_templates', JSON.stringify(quickTemplates.value))
-  ElMessage.success('已将当前模板设为默认值')
+async function resetTemplates() {
+  try {
+    await axios.post('/api/shortcut-templates/reset', { category: 'sql' })
+    await loadTemplates()
+    ElMessage.success('已恢复默认模板')
+  } catch (e) {
+    ElMessage.error('重置失败')
+  }
 }
 
 // ── 表单数据字典 ──
@@ -413,15 +409,14 @@ onMounted(async () => {
               <span class="quick-templates-label">快捷模板</span>
               <div class="quick-templates-actions">
                 <button class="quick-template-btn" @click="addTemplate">新增</button>
-                <button class="quick-template-btn" @click="setAsDefault">设为默认</button>
-                <button class="quick-template-btn" @click="resetTemplates">恢复</button>
+                <button class="quick-template-btn" @click="resetTemplates">恢复默认</button>
               </div>
             </div>
             <div class="quick-templates-list">
               <el-tooltip
                 v-for="(t, idx) in quickTemplates"
                 :key="idx"
-                :content="t"
+                :content="t.content"
                 placement="bottom"
                 :show-after="300"
               >
@@ -434,7 +429,7 @@ onMounted(async () => {
                       <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </div>
-                  <span class="quick-template-item__text">{{ t }}</span>
+                  <span class="quick-template-item__text">{{ t.content }}</span>
                   <div class="quick-template-item__actions">
                     <button class="quick-template-action-btn" @click.stop="editTemplate(idx)" title="编辑">
                       <el-icon :size="10"><Edit /></el-icon>
