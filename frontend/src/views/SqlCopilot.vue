@@ -385,10 +385,42 @@ async function generate() {
   }
 }
 
-function copySql() {
+async function copySql() {
   if (!sqlOutput.value) return
-  navigator.clipboard.writeText(sqlOutput.value)
-  ElMessage.success('已复制到剪贴板')
+
+  try {
+    // 优先使用 Clipboard API（需要 HTTPS 或 localhost）
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(sqlOutput.value)
+      ElMessage.success('已复制到剪贴板')
+      return
+    }
+  } catch (e) {
+    console.warn('Clipboard API 失败，使用 fallback 方法', e)
+  }
+
+  // Fallback：创建临时 textarea 元素复制
+  try {
+    const textarea = document.createElement('textarea')
+    textarea.value = sqlOutput.value
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-9999px'
+    textarea.style.top = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.focus()
+    textarea.select()
+    const success = document.execCommand('copy')
+    document.body.removeChild(textarea)
+
+    if (success) {
+      ElMessage.success('已复制到剪贴板')
+    } else {
+      ElMessage.error('复制失败，请手动复制')
+    }
+  } catch (e) {
+    console.error('复制失败', e)
+    ElMessage.error('复制失败，请手动复制')
+  }
 }
 
 function loadFromHistory(item) {
