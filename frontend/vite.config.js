@@ -26,7 +26,8 @@ export default defineConfig({
     host: '0.0.0.0', // 监听所有网络接口
     proxy: {
       '/api/': {
-        target: `http://${localIP}:8080`,
+        // 使用 localhost 作为代理目标，确保无论通过什么地址访问都能正常工作
+        target: 'http://localhost:8080',
         changeOrigin: true
       }
     }
