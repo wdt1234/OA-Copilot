@@ -8,6 +8,7 @@ import axios from 'axios'
 
 const loading = ref(false)
 const saving = ref(false)
+const testing = ref(false)
 const configs = ref([])
 const showDialog = ref(false)
 const isEdit = ref(false)
@@ -135,23 +136,30 @@ async function handleDelete(row) {
   }
 }
 
-// ── 测试连接 ──
+// ── 测试连接（弹窗内，不保存直接测试） ──
 
-async function testConnection(config) {
+async function handleTestInDialog() {
+  if (!formData.value.endpoint.trim()) {
+    ElMessage.warning('请输入 API 端点')
+    return
+  }
+  if (!formData.value.apiKey.trim() && !isEdit.value) {
+    ElMessage.warning('请输入 API Key')
+    return
+  }
+
+  testing.value = true
   try {
-    ElMessage.info('正在测试连接...')
-    // 临时切换到该配置进行测试
-    const { data } = await axios.put(`/api/ai-configs/${config.id}/activate`)
+    const { data } = await axios.post('/api/ai-configs/test', formData.value)
     if (data.success) {
-      const health = await axios.get('/api/health')
-      if (health.data.ai && health.data.ai.enabled) {
-        ElMessage.success(`连接成功！模型: ${health.data.ai.model}`)
-      } else {
-        ElMessage.warning('AI 未启用')
-      }
+      ElMessage.success(data.message)
+    } else {
+      ElMessage.error(data.message)
     }
   } catch (e) {
-    ElMessage.error('连接失败')
+    ElMessage.error('测试失败')
+  } finally {
+    testing.value = false
   }
 }
 
@@ -275,6 +283,7 @@ onMounted(() => {
 
       <template #footer>
         <el-button @click="showDialog = false">取消</el-button>
+        <el-button @click="handleTestInDialog" :loading="testing">测试连接</el-button>
         <el-button type="primary" @click="handleSave" :loading="saving">保存</el-button>
       </template>
     </el-dialog>

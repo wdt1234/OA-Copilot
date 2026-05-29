@@ -4,6 +4,12 @@ import com.oacopilot.model.AiConfig;
 import com.oacopilot.service.AiConfigService;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -12,9 +18,13 @@ import java.util.Map;
 public class AiConfigController {
 
     private final AiConfigService aiConfigService;
+    private final HttpClient httpClient;
 
     public AiConfigController(AiConfigService aiConfigService) {
         this.aiConfigService = aiConfigService;
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
     }
 
     /**
@@ -79,5 +89,36 @@ public class AiConfigController {
             return Map.of("success", true, "message", "删除成功");
         }
         return Map.of("success", false, "message", "无法删除当前激活的配置");
+    }
+
+    /**
+     * 测试连接（不保存，直接测试指定的配置）
+     */
+    @PostMapping("/test")
+    public Map<String, Object> testConnection(@RequestBody AiConfig config) {
+        try {
+            String requestBody = "{\"model\":\"" + config.getModel() +
+                    "\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"max_tokens\":5}";
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(config.getEndpoint()))
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .header("Authorization", "Bearer " + config.getApiKey())
+                    .timeout(Duration.ofSeconds(15))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+            if (response.statusCode() == 200) {
+                return Map.of("success", true, "message", "连接成功！模型: " + config.getModel());
+            } else {
+                String detail = response.body();
+                if (detail.length() > 200) detail = detail.substring(0, 200);
+                return Map.of("success", false, "message", "HTTP " + response.statusCode() + ": " + detail);
+            }
+        } catch (Exception e) {
+            return Map.of("success", false, "message", "连接失败: " + e.getMessage());
+        }
     }
 }
