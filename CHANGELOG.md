@@ -2,6 +2,32 @@
 
 # 2026-05-29
 
+## 错题库功能开发
+
+### 新增功能
+
+- 错题库前端页面（ErrorCaseLibrary.vue）
+- 按类别筛选：SQL 错误 / DEE 错误 / Token 错误
+- 关键词搜索功能
+- 卡片式展示：现象 / 原因 / 解决方案 / 示例
+- 错误案例 JSON 数据文件（sql_errors.json / dee_errors.json / token_errors.json）
+
+### 后端接口
+
+- ErrorCaseService：加载 JSON 错误案例文件
+- ErrorCaseController：REST API（GET /api/error-cases）
+- 支持按类别筛选和关键词搜索
+
+### 错误案例覆盖
+
+- SQL 错误（6 种）：无效标识符、重复列、CLOB GROUP BY、日期类型、别名超限、长度超限
+- DEE 错误（5 种）：表单不存在、字段格式、JSON 映射、数据库连接、SQL 语法
+- Token 错误（5 种）：认证错误、服务不可用、Token 过期、格式错误、权限不足
+
+---
+
+# 2026-05-29
+
 ## 日志系统全面优化
 
 ### 性能优化

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "token_001",
+    "category": "token",
+    "title": "Token 获取失败 - 认证信息错误",
+    "description": "用户名或密码错误导致 token 获取失败",
+    "symptom": "返回错误：用户名或密码错误",
+    "cause": "用户名或密码拼写错误，或账户已被禁用",
+    "solution": "检查用户名和密码是否正确，确认账户状态正常",
+    "example": {
+      "wrong": "username: admin, password: 123456",
+      "correct": "username: admin, password: 正确密码"
+    },
+    "tags": ["认证", "用户名密码", "账户禁用"]
+  },
+  {
+    "id": "token_002",
+    "category": "token",
+    "title": "Token 获取失败 - 服务不可用",
+    "description": "OA 认证服务不可用",
+    "symptom": "返回错误：连接超时或服务不可用",
+    "cause": "OA 服务器宕机或网络不通",
+    "solution": "检查 OA 服务器状态，确认网络连通性",
+    "example": {
+      "wrong": "http://192.168.1.100:8080/api/token",
+      "correct": "http://10.118.96.25:8080/api/token"
+    },
+    "tags": ["服务不可用", "超时", "网络"]
+  },
+  {
+    "id": "token_003",
+    "category": "token",
+    "title": "Token 过期",
+    "description": "Token 已超过有效期",
+    "symptom": "返回错误：Token 已过期或无效",
+    "cause": "Token 超过有效期（通常 24 小时）",
+    "solution": "重新获取 Token",
+    "example": {
+      "wrong": "使用昨天获取的 Token",
+      "correct": "重新调用 token 接口获取新 Token"
+    },
+    "tags": ["过期", "有效期", "重新获取"]
+  },
+  {
+    "id": "token_004",
+    "category": "token",
+    "title": "Token 格式错误",
+    "description": "请求头中 Token 格式不正确",
+    "symptom": "返回错误：Token 格式无效",
+    "cause": "Authorization 头格式应为 Bearer {token}",
+    "solution": "检查 Authorization 头格式，确保以 Bearer 开头",
+    "example": {
+      "wrong": "Authorization: abc123",
+      "correct": "Authorization: Bearer abc123"
+    },
+    "tags": ["格式错误", "Authorization", "Bearer"]
+  },
+  {
+    "id": "token_005",
+    "category": "token",
+    "title": "Token 权限不足",
+    "description": "Token 对应的用户无权执行操作",
+    "symptom": "返回错误：权限不足或无操作权限",
+    "cause": "当前用户没有执行该操作的权限",
+    "solution": "联系管理员分配相应权限",
+    "example": {
+      "wrong": "普通用户尝试审批流程",
+      "correct": "使用有审批权限的用户 Token"
+    },
+    "tags": ["权限不足", "无操作权限"]
+  }
+]

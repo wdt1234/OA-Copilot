@@ -1,0 +1,72 @@
+[
+  {
+    "id": "dee_001",
+    "category": "dee",
+    "title": "Workflow 启动失败 - 表单不存在",
+    "description": "调用 workflow 接口时表单编码错误",
+    "symptom": "返回错误：表单不存在或无权限",
+    "cause": "formCode 参数错误，或当前用户无权操作该表单",
+    "solution": "检查 formCode 是否正确，确认用户有该表单的操作权限",
+    "example": {
+      "wrong": "formCode: FORMMAIN_9999",
+      "correct": "formCode: FORMMAIN_0433"
+    },
+    "tags": ["workflow", "表单不存在", "权限"]
+  },
+  {
+    "id": "dee_002",
+    "category": "dee",
+    "title": "Workflow 启动失败 - 字段值格式错误",
+    "description": "表单字段值格式不符合要求",
+    "symptom": "返回错误：字段值格式不正确",
+    "cause": "选人字段应传 ID，下拉字段应传 CTP_ENUM_ITEM.id",
+    "solution": "检查字段值格式，选人传 ORG_MEMBER.ID，下拉传 CTP_ENUM_ITEM.ID",
+    "example": {
+      "wrong": "{ \"field1234\": \"张三\" }",
+      "correct": "{ \"field1234\": 1001 }"
+    },
+    "tags": ["workflow", "字段格式", "ID"]
+  },
+  {
+    "id": "dee_003",
+    "category": "dee",
+    "title": "JSON 映射错误 - 字段不存在",
+    "description": "DEE 映射时目标字段不存在",
+    "symptom": "返回错误：字段不存在于目标表单",
+    "cause": "映射的字段名在目标表单中不存在",
+    "solution": "核对目标表单的数据字典，确认字段名正确",
+    "example": {
+      "wrong": "映射到 field9999（目标表单无此字段）",
+      "correct": "映射到 field1234（目标表单存在）"
+    },
+    "tags": ["JSON映射", "字段不存在"]
+  },
+  {
+    "id": "dee_004",
+    "category": "dee",
+    "title": "Handler 执行失败 - 数据库连接",
+    "description": "Java Handler 执行时数据库连接失败",
+    "symptom": "返回错误：数据库连接超时或拒绝连接",
+    "cause": "数据库配置错误，或数据库服务不可用",
+    "solution": "检查数据库连接配置，确认数据库服务正常运行",
+    "example": {
+      "wrong": "jdbc:oracle:thin:@//192.168.1.100:1521/ORCL",
+      "correct": "jdbc:oracle:thin:@//10.118.96.25:1521/ORCL"
+    },
+    "tags": ["Handler", "数据库连接", "超时"]
+  },
+  {
+    "id": "dee_005",
+    "category": "dee",
+    "title": "Handler 执行失败 - SQL 语法错误",
+    "description": "Handler 中的 SQL 语句语法错误",
+    "symptom": "返回错误：ORA-00933: SQL 命令未正确结束",
+    "cause": "SQL 语句拼写错误或语法不正确",
+    "solution": "检查 SQL 语法，使用 SQL Copilot 生成正确的 SQL",
+    "example": {
+      "wrong": "SELECT * FROM formmain_0433 WHERE",
+      "correct": "SELECT * FROM formmain_0433 WHERE id = 1"
+    },
+    "tags": ["Handler", "SQL语法", "ORA-00933"]
+  }
+]

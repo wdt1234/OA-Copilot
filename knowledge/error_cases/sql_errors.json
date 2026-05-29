@@ -1,0 +1,86 @@
+[
+  {
+    "id": "sql_001",
+    "category": "sql",
+    "title": "ORA-00904: 无效标识符",
+    "description": "SQL 语句中引用了不存在的列名",
+    "symptom": "ORA-00904: \"FIELDXXX\": 无效标识符",
+    "cause": "字段名拼写错误，或字段不存在于当前表中",
+    "solution": "检查字段名拼写，确认字段存在于正确的表中。OA 表单字段格式为 fieldxxxx",
+    "example": {
+      "wrong": "SELECT field1234 FROM formmain_0433",
+      "correct": "SELECT field1234 FROM formmain_0433 WHERE field1234 IS NOT NULL"
+    },
+    "tags": ["字段不存在", "拼写错误"]
+  },
+  {
+    "id": "sql_002",
+    "category": "sql",
+    "title": "ORA-00918: 未明确定义列",
+    "description": "SELECT 语句中存在重复的列名",
+    "symptom": "ORA-00918: 未明确定义列",
+    "cause": "多个表有相同列名时未使用表别名区分",
+    "solution": "使用表别名明确指定列所属的表",
+    "example": {
+      "wrong": "SELECT id, name FROM formmain_0433 a, ctp_enum_item b WHERE a.field1234 = b.id",
+      "correct": "SELECT a.id, a.name FROM formmain_0433 a, ctp_enum_item b WHERE a.field1234 = b.id"
+    },
+    "tags": ["重复列名", "表别名"]
+  },
+  {
+    "id": "sql_003",
+    "category": "sql",
+    "title": "CLOB 字段不能用于 GROUP BY",
+    "description": "对 CLOB 类型字段使用 GROUP BY 会导致错误",
+    "symptom": "ORA-00932: 数据类型不一致: 应为 NUMBER, 获得 CLOB",
+    "cause": "CLOB 字段不能直接用于 GROUP BY 或 ORDER BY",
+    "solution": "使用 TO_CHAR() 函数转换 CLOB 字段，或改用其他字段进行分组",
+    "example": {
+      "wrong": "SELECT field1234, COUNT(*) FROM formmain_0433 GROUP BY field1234",
+      "correct": "SELECT TO_CHAR(field1234), COUNT(*) FROM formmain_0433 GROUP BY TO_CHAR(field1234)"
+    },
+    "tags": ["CLOB", "GROUP BY", "数据类型"]
+  },
+  {
+    "id": "sql_004",
+    "category": "sql",
+    "title": "日期字段比较类型不匹配",
+    "description": "日期字段与字符串直接比较导致类型错误",
+    "symptom": "ORA-01843: 无效的月份",
+    "cause": "日期字段与字符串比较时格式不匹配",
+    "solution": "使用 TO_DATE() 函数转换字符串，或使用 TO_CHAR() 转换日期字段",
+    "example": {
+      "wrong": "SELECT * FROM formmain_0433 WHERE start_date > '2026-01-01'",
+      "correct": "SELECT * FROM formmain_0433 WHERE start_date > TO_DATE('2026-01-01', 'YYYY-MM-DD')"
+    },
+    "tags": ["日期", "类型转换", "TO_DATE"]
+  },
+  {
+    "id": "sql_005",
+    "category": "sql",
+    "title": "Oracle 别名长度超限",
+    "description": "列别名超过 30 个字符限制",
+    "symptom": "ORA-00972: 标识符过长",
+    "cause": "Oracle 列别名最长 30 个字符",
+    "solution": "缩短别名，中文别名建议不超过 10 个汉字",
+    "example": {
+      "wrong": "SELECT field1234 AS 这是一个非常非常长的中文别名 FROM formmain_0433",
+      "correct": "SELECT field1234 AS 中文别名 FROM formmain_0433"
+    },
+    "tags": ["别名", "长度限制", "ORA-00972"]
+  },
+  {
+    "id": "sql_006",
+    "category": "sql",
+    "title": "VARCHAR2 字段长度超限",
+    "description": "插入或更新时字符串超过字段长度",
+    "symptom": "ORA-12899: 列 值过大",
+    "cause": "字符串长度超过字段定义的最大长度",
+    "solution": "检查数据长度，或修改字段类型为 CLOB",
+    "example": {
+      "wrong": "INSERT INTO formmain_0433 (field1234) VALUES ('超长字符串...')",
+      "correct": "-- 需要检查字段长度限制，或修改为 CLOB 类型"
+    },
+    "tags": ["VARCHAR2", "长度超限", "ORA-12899"]
+  }
+]

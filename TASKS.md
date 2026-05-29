@@ -151,9 +151,12 @@
 
 ## knowledge/error_cases（错误案例库）
 
-- [ ] SQL 常见错误案例
-- [ ] DEE 接口常见错误案例
-- [ ] token 获取失败案例
+- [x] SQL 常见错误案例（6 种：无效标识符、重复列、CLOB GROUP BY、日期类型、别名超限、长度超限）
+- [x] DEE 接口常见错误案例（5 种：表单不存在、字段格式、JSON 映射、数据库连接、SQL 语法）
+- [x] token 获取失败案例（5 种：认证错误、服务不可用、Token 过期、格式错误、权限不足）
+- [x] ErrorCaseService：加载 JSON 错误案例文件
+- [x] ErrorCaseController：REST API（按类别/搜索）
+- [x] ErrorCaseLibrary.vue：错题库前端页面（分类标签 + 搜索 + 卡片展示）
 
 ---
 
@@ -201,9 +204,10 @@
   - 功能：查看应用日志，支持筛选和导出
   - 后端接口：`/api/logs/files` + `/api/logs/read` + `/api/logs/clear`
   - 前端页面：`SystemLog.vue`（文件列表 + 日志查看 + 筛选）
-- [ ] **系统设置页面**（菜单已有，页面未实现）
-  - 功能：AI 模型配置、API Key 管理等
-  - 后端需要新增接口
+- [x] **系统设置页面**（菜单已有，页面未实现）
+  - 功能：AI 模型配置、API Key 管理
+  - 后端接口：`/api/settings` + `PUT /api/settings/ai`
+  - 前端页面：`SystemSettings.vue`（AI 配置 + 测试连接）
 
 ### 短期（1-2 周）
 
