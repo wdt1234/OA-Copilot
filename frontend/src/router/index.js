@@ -54,6 +54,12 @@ const routes = [
         name: 'SystemLog',
         component: () => import('../views/SystemLog.vue'),
         meta: { title: '系统运行日志', icon: 'Document' }
+      },
+      {
+        path: 'system-settings',
+        name: 'SystemSettings',
+        component: () => import('../views/SystemSettings.vue'),
+        meta: { title: '系统设置', icon: 'Setting' }
       }
     ]
   }
