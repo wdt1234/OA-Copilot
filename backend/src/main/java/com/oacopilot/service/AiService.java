@@ -5,14 +5,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oacopilot.config.AiProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +37,100 @@ public class AiService {
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
+    }
+
+    /**
+     * 对话接口（支持多轮对话 + Prompt 类型）
+     * @param messages 对话历史 [{role: "user", content: "..."}, ...]
+     * @param promptType prompt 类型：oa/dee/空（通用）
+     * @return AI 回复
+     */
+    public String chat(List<Map<String, String>> messages, String promptType) {
+        if (!aiProperties.isEnabled()) {
+            throw new RuntimeException("AI 未启用（ai.enabled=false）");
+        }
+
+        try {
+            List<Map<String, String>> fullMessages = new ArrayList<>();
+
+            // 根据 promptType 添加系统提示
+            String systemPrompt = getSystemPrompt(promptType);
+            if (systemPrompt != null && !systemPrompt.isEmpty()) {
+                fullMessages.add(Map.of("role", "system", "content", systemPrompt));
+            }
+
+            // 添加对话历史
+            fullMessages.addAll(messages);
+
+            String requestBody = objectMapper.writeValueAsString(Map.of(
+                    "model", aiProperties.getModel(),
+                    "messages", fullMessages,
+                    "temperature", 0.7
+            ));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(aiProperties.getEndpoint()))
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .header("Authorization", "Bearer " + aiProperties.getApiKey())
+                    .timeout(Duration.ofSeconds(aiProperties.getTimeout()))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+            if (response.statusCode() != 200) {
+                String detail = response.body();
+                if (detail.length() > 200) detail = detail.substring(0, 200) + "...";
+                log.error("AI API 返回错误: status={}, body={}", response.statusCode(), response.body());
+                throw new RuntimeException("API 返回 HTTP " + response.statusCode() + ": " + detail);
+            }
+
+            JsonNode json = objectMapper.readTree(response.body());
+            String content = json.path("choices").get(0).path("message").path("content").asText();
+            if (content == null || content.isEmpty()) {
+                throw new RuntimeException("AI 返回空内容");
+            }
+            return content;
+
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("AI 对话失败: {}", e.getMessage());
+            throw new RuntimeException("AI 调用异常: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据 promptType 获取系统提示
+     */
+    private String getSystemPrompt(String promptType) {
+        if (promptType == null || promptType.isEmpty()) {
+            return "你是 OA Copilot 智能助手，可以回答各种问题。";
+        }
+        return switch (promptType) {
+            case "oa" -> loadPromptFile("knowledge/prompts/dashboard/oa_assistant.md");
+            case "dee" -> loadPromptFile("knowledge/prompts/dashboard/dee_assistant.md");
+            default -> "你是 OA Copilot 智能助手，可以回答各种问题。";
+        };
+    }
+
+    /**
+     * 加载 Prompt 文件
+     */
+    private String loadPromptFile(String path) {
+        try {
+            ClassPathResource resource = new ClassPathResource(path);
+            if (!resource.exists()) {
+                log.warn("Prompt 文件不存在: {}", path);
+                return null;
+            }
+            try (InputStream is = resource.getInputStream()) {
+                return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            log.error("加载 Prompt 文件失败: {}", path, e);
+            return null;
+        }
     }
 
     /**
