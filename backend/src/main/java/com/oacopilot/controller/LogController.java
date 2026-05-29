@@ -1,8 +1,12 @@
 package com.oacopilot.controller;
 
 import com.oacopilot.service.LogService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +50,14 @@ public class LogController {
     }
 
     /**
+     * 获取日志统计信息
+     */
+    @GetMapping("/stats/{fileName}")
+    public Map<String, Object> getLogStats(@PathVariable String fileName) {
+        return logService.getLogStats(fileName);
+    }
+
+    /**
      * 清除日志文件
      */
     @DeleteMapping("/clear/{fileName}")
@@ -61,5 +73,45 @@ public class LogController {
     public Map<String, Object> deleteLogFile(@PathVariable String fileName) {
         boolean success = logService.deleteLogFile(fileName);
         return Map.of("success", success, "message", success ? "已删除" : "删除失败");
+    }
+
+    /**
+     * 导出日志文件（下载）
+     */
+    @GetMapping("/export/{fileName}")
+    public ResponseEntity<byte[]> exportLogFile(@PathVariable String fileName) {
+        byte[] content = logService.exportLogFile(fileName);
+        if (content == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.TEXT_PLAIN)
+                .contentLength(content.length)
+                .body(content);
+    }
+
+    /**
+     * 导出筛选后的日志（下载）
+     */
+    @GetMapping("/export-filtered/{fileName}")
+    public ResponseEntity<byte[]> exportFilteredLogs(
+            @PathVariable String fileName,
+            @RequestParam(required = false) String level,
+            @RequestParam(required = false) String keyword) {
+        String content = logService.exportFilteredLogs(fileName, level, keyword);
+        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+
+        String exportName = fileName.replace(".log", "");
+        if (level != null && !level.isEmpty()) exportName += "_" + level;
+        if (keyword != null && !keyword.isEmpty()) exportName += "_filtered";
+        exportName += ".log";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + exportName + "\"")
+                .contentType(MediaType.TEXT_PLAIN)
+                .contentLength(bytes.length)
+                .body(bytes);
     }
 }

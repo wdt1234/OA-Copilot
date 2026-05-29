@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Delete, Download, Search } from '@element-plus/icons-vue'
 import axios from 'axios'
@@ -18,6 +18,9 @@ const filterKeyword = ref('')
 const autoRefresh = ref(false)
 let refreshTimer = null
 
+// 日志统计
+const logStats = ref({ total: 0, errors: 0, warns: 0, infos: 0, size: '0 B' })
+
 // ── 加载日志文件列表 ──
 
 async function loadLogFiles() {
@@ -29,6 +32,17 @@ async function loadLogFiles() {
     }
   } catch (e) {
     console.error('加载日志文件列表失败', e)
+  }
+}
+
+// ── 加载日志统计 ──
+
+async function loadStats() {
+  try {
+    const { data } = await axios.get(`/api/logs/stats/${currentFile.value}`)
+    logStats.value = data
+  } catch (e) {
+    console.error('加载统计失败', e)
   }
 }
 
@@ -48,6 +62,9 @@ async function loadLogs() {
     const { data } = await axios.get('/api/logs/read', { params })
     logLines.value = data.lines || []
     totalLines.value = data.total || 0
+
+    // 同时刷新统计
+    loadStats()
   } catch (e) {
     console.error('加载日志失败', e)
     ElMessage.error('加载日志失败')
@@ -111,6 +128,22 @@ async function deleteLog() {
   }
 }
 
+// ── 导出日志 ──
+
+function exportLog() {
+  const url = `/api/logs/export/${currentFile.value}`
+  window.open(url, '_blank')
+  ElMessage.success('正在导出...')
+}
+
+function exportFilteredLog() {
+  let url = `/api/logs/export-filtered/${currentFile.value}?`
+  if (filterLevel.value) url += `level=${filterLevel.value}&`
+  if (filterKeyword.value) url += `keyword=${filterKeyword.value}`
+  window.open(url, '_blank')
+  ElMessage.success('正在导出筛选后的日志...')
+}
+
 // ── 自动刷新 ──
 
 function toggleAutoRefresh() {
@@ -160,6 +193,12 @@ onMounted(async () => {
   await loadLogFiles()
   loadLogs()
 })
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+  }
+})
 </script>
 
 <template>
@@ -170,6 +209,30 @@ onMounted(async () => {
         <span>系统运行日志</span>
       </div>
       <div class="page-desc">查看应用运行日志，支持筛选和导出</div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-cards">
+      <div class="stat-card">
+        <span class="stat-value">{{ logStats.total }}</span>
+        <span class="stat-label">总日志数</span>
+      </div>
+      <div class="stat-card stat-error">
+        <span class="stat-value">{{ logStats.errors }}</span>
+        <span class="stat-label">ERROR</span>
+      </div>
+      <div class="stat-card stat-warn">
+        <span class="stat-value">{{ logStats.warns }}</span>
+        <span class="stat-label">WARN</span>
+      </div>
+      <div class="stat-card stat-info">
+        <span class="stat-value">{{ logStats.infos }}</span>
+        <span class="stat-label">INFO</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ logStats.size }}</span>
+        <span class="stat-label">文件大小</span>
+      </div>
     </div>
 
     <!-- 工具栏 -->
@@ -213,17 +276,22 @@ onMounted(async () => {
         <!-- 操作按钮 -->
         <el-button :icon="Refresh" @click="refresh" :loading="loading">刷新</el-button>
         <el-button @click="toggleAutoRefresh" :type="autoRefresh ? 'success' : 'default'">
-          {{ autoRefresh ? '停止自动刷新' : '自动刷新' }}
+          {{ autoRefresh ? '停止' : '自动刷新' }}
         </el-button>
-        <el-button type="danger" :icon="Delete" @click="clearLog">清除日志</el-button>
+        <el-button :icon="Download" @click="exportLog">导出</el-button>
+        <el-button v-if="filterLevel || filterKeyword" :icon="Download" @click="exportFilteredLog">
+          导出筛选
+        </el-button>
+        <el-button type="danger" :icon="Delete" @click="clearLog">清除</el-button>
       </div>
     </div>
 
     <!-- 日志统计 -->
     <div class="log-stats">
       <span>共 {{ totalLines }} 条日志</span>
-      <span v-if="filterLevel"> | 筛选级别: {{ filterLevel }}</span>
+      <span v-if="filterLevel"> | 级别: {{ filterLevel }}</span>
       <span v-if="filterKeyword"> | 搜索: {{ filterKeyword }}</span>
+      <span> | 第 {{ currentPage }} / {{ totalPages }} 页</span>
     </div>
 
     <!-- 日志内容 -->
@@ -245,7 +313,7 @@ onMounted(async () => {
     <!-- 分页 -->
     <div class="pagination" v-if="totalPages > 1">
       <el-button :disabled="currentPage <= 1" @click="prevPage">上一页</el-button>
-      <span class="page-info">第 {{ currentPage }} / {{ totalPages }} 页</span>
+      <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
       <el-button :disabled="currentPage >= totalPages" @click="nextPage">下一页</el-button>
     </div>
   </div>
@@ -275,6 +343,51 @@ onMounted(async () => {
   color: var(--color-text-secondary);
 }
 
+/* 统计卡片 */
+.stats-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 100px;
+  background: white;
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.stat-error .stat-value {
+  color: #f44747;
+}
+
+.stat-warn .stat-value {
+  color: #cca700;
+}
+
+.stat-info .stat-value {
+  color: #4ec9b0;
+}
+
+/* 工具栏 */
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -341,6 +454,7 @@ onMounted(async () => {
   margin-bottom: 12px;
 }
 
+/* 日志内容 */
 .log-content {
   flex: 1;
   background: #1e1e1e;
@@ -348,7 +462,7 @@ onMounted(async () => {
   padding: 16px;
   overflow: auto;
   min-height: 400px;
-  max-height: calc(100vh - 300px);
+  max-height: calc(100vh - 380px);
 }
 
 .empty-state {
@@ -395,6 +509,7 @@ onMounted(async () => {
   color: #808080;
 }
 
+/* 分页 */
 .pagination {
   display: flex;
   justify-content: center;
