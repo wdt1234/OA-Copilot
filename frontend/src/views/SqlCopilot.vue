@@ -418,28 +418,33 @@ onMounted(async () => {
               </div>
             </div>
             <div class="quick-templates-list">
-              <div
+              <el-tooltip
                 v-for="(t, idx) in quickTemplates"
                 :key="idx"
-                class="quick-template-item"
-                @click="useTemplate(t)"
+                :content="t"
+                placement="bottom"
+                :show-after="300"
               >
-                <div class="quick-template-item__icon">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+                <div
+                  class="quick-template-item"
+                  @click="useTemplate(t)"
+                >
+                  <div class="quick-template-item__icon">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <span class="quick-template-item__text">{{ t }}</span>
+                  <div class="quick-template-item__actions">
+                    <button class="quick-template-action-btn" @click.stop="editTemplate(idx)" title="编辑">
+                      <el-icon :size="10"><Edit /></el-icon>
+                    </button>
+                    <button class="quick-template-action-btn quick-template-action-btn--danger" @click.stop="removeTemplate(idx)" title="删除">
+                      <el-icon :size="10"><Close /></el-icon>
+                    </button>
+                  </div>
                 </div>
-                <span class="quick-template-item__text">{{ t }}</span>
-                <div class="quick-template-item__actions">
-                  <button class="quick-template-action-btn" @click.stop="editTemplate(idx)" title="编辑">
-                    <el-icon :size="10"><Edit /></el-icon>
-                  </button>
-                  <button class="quick-template-action-btn quick-template-action-btn--danger" @click.stop="removeTemplate(idx)" title="删除">
-                    <el-icon :size="10"><Close /></el-icon>
-                  </button>
-                </div>
-              </div>
+              </el-tooltip>
             </div>
           </div>
 
