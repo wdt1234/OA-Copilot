@@ -33,7 +33,7 @@ public class LogService {
         try {
             Files.list(logPath)
                 .filter(p -> p.toString().endsWith(".log"))
-                .sorted(Comparator.reverseSorted())
+                .sorted((a, b) -> b.compareTo(a))
                 .forEach(p -> {
                     Map<String, Object> fileInfo = new LinkedHashMap<>();
                     fileInfo.put("name", p.getFileName().toString());
