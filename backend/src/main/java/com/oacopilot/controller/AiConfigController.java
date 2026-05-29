@@ -114,11 +114,16 @@ public class AiConfigController {
                 return Map.of("success", true, "message", "连接成功！模型: " + config.getModel());
             } else {
                 String detail = response.body();
-                if (detail.length() > 200) detail = detail.substring(0, 200);
-                return Map.of("success", false, "message", "HTTP " + response.statusCode() + ": " + detail);
+                if (detail.length() > 300) detail = detail.substring(0, 300);
+                return Map.of("success", false, "message", "HTTP " + response.statusCode() + ": " + detail,
+                        "endpoint", config.getEndpoint(), "model", config.getModel());
             }
+        } catch (java.net.ConnectException e) {
+            return Map.of("success", false, "message", "无法连接到服务器: " + config.getEndpoint());
+        } catch (java.net.http.HttpTimeoutException e) {
+            return Map.of("success", false, "message", "连接超时，请检查网络或端点地址");
         } catch (Exception e) {
-            return Map.of("success", false, "message", "连接失败: " + e.getMessage());
+            return Map.of("success", false, "message", "连接失败: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
     }
 }
