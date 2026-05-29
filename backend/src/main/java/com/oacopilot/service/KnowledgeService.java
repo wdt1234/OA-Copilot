@@ -474,4 +474,44 @@ public class KnowledgeService {
         }
         return result;
     }
+
+    /**
+     * 列出所有 Prompt 模板（用于前端展示）
+     * @return Prompt 列表，包含 path、name、content 等信息
+     */
+    public java.util.List<java.util.Map<String, Object>> listPrompts() {
+        java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
+
+        // SQL Prompts
+        String[] sqlPrompts = {"form_query"};
+        for (String name : sqlPrompts) {
+            String path = "sql/" + name;
+            String content = getPrompt(path);
+            if (content != null) {
+                java.util.Map<String, Object> promptInfo = new java.util.LinkedHashMap<>();
+                promptInfo.put("id", path);
+                promptInfo.put("name", name);
+                promptInfo.put("category", "sql");
+                promptInfo.put("content", content);
+                result.add(promptInfo);
+            }
+        }
+
+        // DEE Prompts
+        String[] deePrompts = {"workflow", "token", "json", "java"};
+        for (String name : deePrompts) {
+            String path = "dee/" + name;
+            String content = getPrompt(path);
+            if (content != null) {
+                java.util.Map<String, Object> promptInfo = new java.util.LinkedHashMap<>();
+                promptInfo.put("id", path);
+                promptInfo.put("name", name);
+                promptInfo.put("category", "dee");
+                promptInfo.put("content", content);
+                result.add(promptInfo);
+            }
+        }
+
+        return result;
+    }
 }

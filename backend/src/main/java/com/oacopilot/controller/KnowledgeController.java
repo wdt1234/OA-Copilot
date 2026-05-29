@@ -50,4 +50,12 @@ public class KnowledgeController {
     public List<Map<String, Object>> listSystemTables() {
         return knowledgeService.listSystemTables();
     }
+
+    /**
+     * 列出所有 Prompt 模板
+     */
+    @GetMapping("/prompts")
+    public List<Map<String, Object>> listPrompts() {
+        return knowledgeService.listPrompts();
+    }
 }
