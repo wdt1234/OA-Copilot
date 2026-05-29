@@ -2,6 +2,8 @@ package com.oacopilot.controller;
 
 import com.oacopilot.model.AiConfig;
 import com.oacopilot.service.AiConfigService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -17,6 +19,7 @@ import java.util.Map;
 @RequestMapping("/api/ai-configs")
 public class AiConfigController {
 
+    private static final Logger log = LoggerFactory.getLogger(AiConfigController.class);
     private final AiConfigService aiConfigService;
     private final HttpClient httpClient;
 
@@ -96,9 +99,12 @@ public class AiConfigController {
      */
     @PostMapping("/test")
     public Map<String, Object> testConnection(@RequestBody AiConfig config) {
+        log.info("测试连接 - endpoint: [{}], model: [{}]", config.getEndpoint(), config.getModel());
         try {
             String requestBody = "{\"model\":\"" + config.getModel() +
                     "\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"max_tokens\":5}";
+
+            log.info("请求体: {}", requestBody);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(config.getEndpoint()))
@@ -110,6 +116,8 @@ public class AiConfigController {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
+            log.info("响应状态: {}, body: {}", response.statusCode(), response.body());
+
             if (response.statusCode() == 200) {
                 return Map.of("success", true, "message", "连接成功！模型: " + config.getModel());
             } else {
@@ -119,10 +127,13 @@ public class AiConfigController {
                         "endpoint", config.getEndpoint(), "model", config.getModel());
             }
         } catch (java.net.ConnectException e) {
+            log.error("连接失败: {}", e.getMessage());
             return Map.of("success", false, "message", "无法连接到服务器: " + config.getEndpoint());
         } catch (java.net.http.HttpTimeoutException e) {
+            log.error("连接超时: {}", e.getMessage());
             return Map.of("success", false, "message", "连接超时，请检查网络或端点地址");
         } catch (Exception e) {
+            log.error("测试连接异常: ", e);
             return Map.of("success", false, "message", "连接失败: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
     }
