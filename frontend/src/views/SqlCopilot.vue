@@ -971,40 +971,41 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border-light);
-  border-radius: 6px;
+  padding: 8px 14px;
+  background: var(--color-primary-light);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
   cursor: pointer;
   transition: all var(--transition-fast);
-  max-width: 200px;
+  max-width: 220px;
 }
 
 .quick-template-item:hover {
+  background: var(--color-primary);
   border-color: var(--color-primary);
-  background: var(--color-primary-light);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .quick-template-item__icon {
   color: var(--color-primary);
   flex-shrink: 0;
-  opacity: 0.7;
 }
 
 .quick-template-item:hover .quick-template-item__icon {
-  opacity: 1;
+  color: #fff;
 }
 
 .quick-template-item__text {
-  font-size: 12px;
-  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .quick-template-item:hover .quick-template-item__text {
-  color: var(--color-primary);
+  color: #fff;
 }
 
 .quick-template-item__actions {
@@ -1028,18 +1029,18 @@ onMounted(async () => {
   background: transparent;
   border-radius: 4px;
   cursor: pointer;
-  color: var(--color-text-muted);
+  color: var(--color-primary);
   transition: all var(--transition-fast);
 }
 
 .quick-template-action-btn:hover {
-  background: var(--color-bg-page);
-  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.3);
+  color: #fff;
 }
 
 .quick-template-action-btn--danger:hover {
-  background: #fef2f2;
-  color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.8);
+  color: #fff;
 }
 
 /* Recommend Section */
