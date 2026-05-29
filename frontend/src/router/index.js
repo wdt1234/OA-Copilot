@@ -48,6 +48,12 @@ const routes = [
         name: 'PromptManager',
         component: () => import('../views/PromptManager.vue'),
         meta: { title: 'AI Prompt 管理', icon: 'Setting' }
+      },
+      {
+        path: 'system-log',
+        name: 'SystemLog',
+        component: () => import('../views/SystemLog.vue'),
+        meta: { title: '系统运行日志', icon: 'Document' }
       }
     ]
   }

@@ -2,6 +2,39 @@
 
 # 2026-05-29
 
+## 系统运行日志页面 + 复制功能修复
+
+### 系统运行日志页面
+
+- 新增 SystemLog.vue 前端页面
+- 支持查看多个日志文件（app.log + 按日期归档）
+- 支持按日志级别筛选（ERROR/WARN/INFO/DEBUG）
+- 支持关键词搜索
+- 支持分页浏览
+- 支持自动刷新（5秒间隔）
+- 支持清除和删除日志文件
+- 后端新增 LogService + LogController
+- logback 配置添加文件输出（logs/app.log）
+
+### 复制功能修复
+
+- 修复非 localhost 环境下复制 SQL 失败的问题
+- 添加 Clipboard API fallback 支持
+- 使用 document.execCommand('copy') 作为备选方案
+
+### 涉及文件
+
+- backend: LogService.java, LogController.java（新增）
+- backend: logback-spring.xml（添加文件输出）
+- frontend: SystemLog.vue（新增页面）
+- frontend: router/index.js（新增路由）
+- frontend: AdminLayout.vue（修正菜单路径）
+- frontend: SqlCopilot.vue（复制功能修复）
+
+---
+
+# 2026-05-29
+
 ## 快捷模板云端同步 + AI Prompt 管理页面
 
 ### 快捷模板云端同步

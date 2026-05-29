@@ -53,7 +53,7 @@ const menuGroups = [
   {
     label: '系统管理',
     items: [
-      { path: '/field-mapper', title: '系统运行日志', icon: 'Document' },
+      { path: '/system-log', title: '系统运行日志', icon: 'Document' },
       { path: '/data-dictionary', title: '系统设置', icon: 'Setting' },
     ]
   }

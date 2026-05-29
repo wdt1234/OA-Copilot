@@ -197,9 +197,10 @@
   - 功能：查看/编辑 Prompt 模板
   - 后端接口已有：`/api/knowledge/prompts` + `PUT /api/knowledge/prompts/{path}`
   - 前端页面：`PromptManager.vue`（按分类查看 + 编辑保存）
-- [ ] **系统运行日志页面**（菜单已有，页面未实现）
+- [x] **系统运行日志页面**（菜单已有，页面未实现）
   - 功能：查看应用日志，支持筛选和导出
-  - 后端需要新增接口
+  - 后端接口：`/api/logs/files` + `/api/logs/read` + `/api/logs/clear`
+  - 前端页面：`SystemLog.vue`（文件列表 + 日志查看 + 筛选）
 - [ ] **系统设置页面**（菜单已有，页面未实现）
   - 功能：AI 模型配置、API Key 管理等
   - 后端需要新增接口
